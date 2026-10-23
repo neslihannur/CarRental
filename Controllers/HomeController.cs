@@ -1,14 +1,11 @@
 using CarRental.Models;
 using Microsoft.AspNetCore.Mvc;
-using RestSharp;
 using System.Diagnostics;
 
 namespace CarRental.Controllers
 {
     public class HomeController : Controller
     {
-        string connectionString = "Server=104.247.162.242\\MSSQLSERVER2019;Initial Catalog=nazlisun_CarRentalDb; User Id=nazlisun_CarRental;Password=Nazli.55?; TrustServerCertificate=True";
-
         private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
@@ -16,11 +13,65 @@ namespace CarRental.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        [HttpGet("/")]
+        public IActionResult Index(string? tip, string? konum, DateOnly? alis, DateOnly? donus)
         {
-            return View();
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var pickup = alis is { } a && a >= today ? a : today.AddDays(1);
+            var ret = donus is { } d && d > pickup ? d : pickup.AddDays(3);
+
+            var cars = Fleet.Cars.AsEnumerable();
+            if (!string.IsNullOrEmpty(tip) && Fleet.Categories.Contains(tip))
+                cars = cars.Where(c => c.Category == tip);
+
+            return View(new HomeViewModel
+            {
+                Cars = cars.ToList(),
+                Category = tip,
+                Location = konum,
+                PickupDate = pickup,
+                ReturnDate = ret,
+                Filtered = tip is not null || alis is not null,
+            });
         }
 
+        [HttpPost("/rezervasyon")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Reserve(ReservationViewModel model)
+        {
+            var car = Fleet.Find(model.CarId);
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            if (!string.IsNullOrEmpty(model.Website))
+                return Redirect("/");
+            if (car is null)
+                ModelState.AddModelError(nameof(model.CarId), "AraÃ§ bulunamadÄ±.");
+            if (model.PickupDate < today)
+                ModelState.AddModelError(nameof(model.PickupDate), "AlÄ±ÅŸ tarihi geÃ§miÅŸte olamaz.");
+            if (model.ReturnDate <= model.PickupDate)
+                ModelState.AddModelError(nameof(model.ReturnDate), "DÃ¶nÃ¼ÅŸ tarihi alÄ±ÅŸtan sonra olmalÄ±.");
+
+            if (!ModelState.IsValid || car is null)
+            {
+                TempData["ReservationError"] = string.Join(" ", ModelState.Values
+                    .SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct());
+                return Redirect("/#filo");
+            }
+
+            var days = model.ReturnDate!.Value.DayNumber - model.PickupDate!.Value.DayNumber;
+            var code = "GC" + Random.Shared.Next(100000, 999999);
+            _logger.LogInformation("Rezervasyon {Code}: {Car}, {Days} gÃ¼n", code, car.Model, days);
+
+            TempData["ReservationCode"] = code;
+            TempData["ReservationCar"] = $"{car.Brand} {car.Model}";
+            TempData["ReservationSummary"] =
+                $"{model.PickupLocation} Â· {model.PickupDate:dd.MM.yyyy} â€“ {model.ReturnDate:dd.MM.yyyy} Â· {days} gÃ¼n";
+            TempData["ReservationTotal"] = (car.DailyPrice * days).ToString("N0", Tr) + " â‚º";
+            TempData["ReservationName"] = model.FullName;
+            return Redirect("/#rezervasyon");
+        }
+
+        [HttpGet("/gizlilik")]
         public IActionResult Privacy()
         {
             return View();
@@ -32,39 +83,6 @@ namespace CarRental.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        [HttpPost]
-        public IActionResult Login(LoginViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model); // Model geçersizse formu tekrar göster
-            }
-
-            var captchaToken = Request.Form["g-recaptcha-response"]; // reCAPTCHA token'ýný al
-
-            if (!VerifyCaptcha(captchaToken))
-            {
-                ViewBag.CaptchaError = true; // Hata mesajý
-                return View(model); // Hatalý giriþte formu tekrar göster
-            }
-
-            // Kullanýcý bilgilerini kontrol etme (örneðin, veritabaný ile)
-            // Kullanýcý doðrulamasý baþarýlýysa
-            // Giriþ iþlemleri (örneðin, oturum açma)
-
-            return RedirectToAction("Index", "Home"); // Baþarýlý giriþte anasayfaya yönlendir
-        }
-        public bool VerifyCaptcha(string captchaToken)
-        {
-            var client = new RestClient("https://www.google.com/recaptcha");
-            var request = new RestRequest("api/siteverify", Method.Post);
-            request.AddParameter("secret", "6Lc5BTwqAAAAAKgTlpPBF_dYw-Xt_ouAOI6rcuVj"); // Secret anahtarýnýzý buraya ekleyin
-            request.AddParameter("response", captchaToken);
-
-            var response = client.Execute<CaptchaResponse>(request);
-
-            return response.Data.Success;
-        }
-
+        static readonly System.Globalization.CultureInfo Tr = new("tr-TR");
     }
 }

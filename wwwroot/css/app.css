@@ -1,0 +1,200 @@
+/* GoCar — şablonun üstüne modern katman */
+:root {
+  --accent-color: #94CA21;
+  --accent-strong: #6F9C10;
+  --accent-soft: #F1F8E1;
+  --dark-color: #141814;
+  --body-text-color: #2B302B;
+  --light-text-color: #646B64;
+  --background-color: #F6F8F3;
+  --line: #E7EAE3;
+  --radius: 18px;
+  --shadow: 0 18px 50px rgba(20, 24, 20, .08);
+  --body-font: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --heading-font: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --sub-heading-font: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body { overflow-x: hidden; letter-spacing: 0; color: var(--light-text-color); background: #fff; }
+h1, h2, h3, .h1, .h2, .h3 { text-transform: none; letter-spacing: -0.02em; font-weight: 800; }
+h1 { font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.05; }
+h2 { font-size: clamp(1.9rem, 3.4vw, 2.75rem); line-height: 1.15; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.3rem; text-transform: none; font-weight: 700; color: var(--dark-color); }
+h5 { font-size: .95rem; letter-spacing: 0; text-transform: none; font-weight: 700; color: var(--dark-color); }
+.text-primary { color: var(--accent-strong) !important; }
+a { color: var(--accent-strong); }
+
+.section { padding: 96px 0; }
+.section-soft { background: var(--background-color); }
+.page-top { padding-top: 160px; min-height: 70vh; }
+.narrow { max-width: 760px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-strong); margin-bottom: .75rem;
+}
+
+/* Butonlar */
+.btn { border-radius: 999px; letter-spacing: 0; text-transform: none; }
+.btn-primary { --bs-btn-padding-x: 1.4rem; --bs-btn-padding-y: .8rem; text-transform: none; letter-spacing: 0; }
+.btn-lg-pill { padding: .95rem 1.6rem; font-weight: 700; display: inline-flex; align-items: center; gap: .5rem; }
+.btn-ghost { border: 1.5px solid var(--line); color: var(--dark-color); background: #fff; }
+.btn-ghost:hover { border-color: var(--dark-color); color: var(--dark-color); }
+.btn-nav { --bs-btn-padding-y: .6rem; }
+
+/* Menü */
+nav.navbar { background: rgba(255, 255, 255, .85); backdrop-filter: blur(12px); transition: box-shadow .2s; }
+nav.navbar.scrolled { box-shadow: 0 6px 24px rgba(20, 24, 20, .06); }
+a.nav-link { font-weight: 600; text-transform: none; }
+
+/* Hero */
+section#hero { background: linear-gradient(180deg, var(--background-color), #fff); }
+.hero-grid {
+  display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center;
+  padding: 150px 12px 150px;
+}
+.hero-paragraph { font-size: 1.15rem; max-width: 34rem; margin-top: 1.25rem; }
+.hero-stats { display: flex; gap: 40px; margin-top: 44px; }
+.hero-stats strong { display: block; font-size: 1.6rem; color: var(--dark-color); font-weight: 800; }
+.hero-stats span { font-size: .9rem; }
+.hero-visual { position: relative; }
+.hero-visual img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 28px; box-shadow: var(--shadow); }
+.hero-badge {
+  position: absolute; left: -24px; bottom: 28px; display: flex; gap: .75rem; align-items: center;
+  background: #fff; padding: .9rem 1.1rem; border-radius: 16px; box-shadow: var(--shadow);
+}
+.hero-badge iconify-icon { font-size: 2rem; color: var(--accent-color); }
+.hero-badge strong { display: block; color: var(--dark-color); font-size: .95rem; }
+.hero-badge span { font-size: .8rem; }
+
+/* Arama */
+.search-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow);
+  padding: 28px; margin: -96px 0 0; position: relative; z-index: 2;
+}
+.search-card .form-label, .modal .form-label { font-size: .8rem; font-weight: 700; color: var(--dark-color); }
+.form-control, .form-select { border: 1.5px solid var(--line); border-radius: 12px !important; padding: .8rem .95rem; font-size: .95rem; }
+.form-control:focus, .form-select:focus { border-color: var(--accent-color); box-shadow: 0 0 0 4px var(--accent-soft); }
+.field-icon { position: relative; }
+.field-icon iconify-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9aa19a; font-size: 1.15rem; pointer-events: none; z-index: 1; }
+.field-icon .form-select { padding-left: 2.6rem; }
+.btn-search { display: inline-flex; justify-content: center; align-items: center; gap: .5rem; padding: .85rem 1rem; }
+
+/* Rezervasyon onayı */
+#rezervasyon { margin-top: 40px; }
+.reservation-success {
+  display: flex; gap: 1.25rem; align-items: center; padding: 24px 28px;
+  background: var(--accent-soft); border: 1px solid #D3EB9F; border-radius: var(--radius);
+}
+.reservation-success h3 { font-size: 1.25rem; margin-bottom: .35rem; }
+.success-icon { font-size: 3rem; color: var(--accent-strong); flex-shrink: 0; }
+.code { font-family: ui-monospace, monospace; font-weight: 700; color: var(--dark-color); background: #fff; padding: .1rem .5rem; border-radius: 6px; }
+
+/* Filo */
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+.section-head p { max-width: 26rem; margin: 0; }
+.category-pills { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 28px; }
+.category-pills a {
+  padding: .55rem 1.1rem; border-radius: 999px; border: 1.5px solid var(--line);
+  color: var(--body-text-color); font-weight: 600; font-size: .9rem; text-decoration: none; transition: .2s;
+}
+.category-pills a:hover { border-color: var(--dark-color); }
+.category-pills a.active { background: var(--dark-color); border-color: var(--dark-color); color: #fff; }
+
+.car-card {
+  height: 100%; display: flex; flex-direction: column; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.car-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.car-media { position: relative; aspect-ratio: 3 / 2; overflow: hidden; background: var(--background-color); }
+.car-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.car-card:hover .car-media img { transform: scale(1.04); }
+.car-tag {
+  position: absolute; top: 14px; left: 14px; background: rgba(255, 255, 255, .92);
+  padding: .3rem .75rem; border-radius: 999px; font-size: .75rem; font-weight: 700; color: var(--dark-color);
+}
+.car-body { padding: 22px 22px 20px; display: flex; flex-direction: column; flex: 1; }
+.car-brand { font-size: .85rem; font-weight: 700; color: var(--accent-strong); margin-bottom: .2rem; }
+.car-body h4 { margin-bottom: .35rem; }
+.car-tagline { font-size: .92rem; margin-bottom: 1rem; }
+.car-specs { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .85rem; margin: 0 0 1.25rem; }
+.car-specs li { display: inline-flex; align-items: center; gap: .35rem; }
+.car-specs iconify-icon { font-size: 1.1rem; color: #9aa19a; }
+.car-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+.car-price strong { font-size: 1.35rem; font-weight: 800; color: var(--dark-color); }
+.car-price span { font-size: .85rem; margin-left: .25rem; }
+.btn-rent { --bs-btn-padding-y: .6rem; --bs-btn-padding-x: 1.3rem; }
+
+/* Süreç */
+.step { position: relative; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 24px; height: 100%; }
+.step-no { position: absolute; top: 20px; right: 22px; font-weight: 800; color: #DDE3D6; font-size: 1.6rem; }
+.step-icon { font-size: 2.2rem; color: var(--accent-color); margin-bottom: 1rem; }
+.step p { font-size: .92rem; margin: .4rem 0 0; }
+
+/* Yorumlar */
+.testimonial-paragraph { font-size: 1.35rem; line-height: 1.6; color: var(--body-text-color); }
+.avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.swiper-pagination-bullet-active { background: var(--accent-color); }
+
+/* Paketler */
+.pricing-detail { border-radius: var(--radius); display: flex; flex-direction: column; justify-content: space-between; }
+.pricing-detail.featured { border-color: var(--accent-color); box-shadow: var(--shadow); }
+.pricing-lable { border-radius: var(--radius); padding: 28px 24px !important; overflow: hidden; position: relative; }
+.pricing-lable h3 { font-size: 1.5rem; }
+.pricing-content .content { align-items: baseline; justify-content: center; gap: .3rem; }
+.pricing-content .content h3 { font-size: 2rem; margin: 0; }
+.save-badge { background: var(--accent-soft); color: var(--accent-strong); padding: .1rem .5rem; border-radius: 999px; font-weight: 700; margin-left: .25rem; }
+.label-color { color: var(--accent-strong); font-weight: 700; }
+
+/* Hizmetler */
+.services-components { border-radius: var(--radius); background: #fff; border: 1px solid var(--line); padding: 28px 20px !important; }
+.services-components p { font-size: .92rem; }
+#services, #service-2 { margin: 0; }
+
+/* SSS */
+.accordion-button { font-weight: 700; color: var(--dark-color); text-transform: none; letter-spacing: 0; }
+
+/* CTA */
+#action { padding-bottom: 40px; }
+.cta-card { position: relative; overflow: hidden; background: var(--dark-color); border-radius: 28px; padding: 56px; }
+.cta-card h2 { color: #fff; }
+.cta-card .text-primary { color: var(--accent-color) !important; }
+.cta-card p { color: #B9C0B9; margin: 1rem 0 1.5rem; }
+.cta-card .pattern-overlay { right: 0; bottom: 0; opacity: .5; }
+
+/* Modal */
+.modal-content { border-radius: 22px; border: none; }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--line); }
+.modal-body { padding: 24px; }
+.modal-footer { border-top: 1px solid var(--line); padding: 16px 24px; }
+.modal-car { width: 72px; height: 48px; object-fit: cover; border-radius: 10px; }
+.price-summary { display: flex; justify-content: space-between; align-items: center; background: var(--background-color); padding: 16px 20px; border-radius: 14px; }
+.price-summary strong { font-size: 1.4rem; color: var(--dark-color); }
+.modal-backdrop { z-index: 99999990; }
+.modal { z-index: 99999999; }
+
+/* Alt bilgi */
+.footer-title { text-transform: uppercase; font-size: .78rem; letter-spacing: .08em; color: var(--light-text-color); margin-bottom: 1rem; }
+.footer-links li { margin-bottom: .6rem; display: flex; align-items: center; gap: .5rem; }
+.footer-links a { color: var(--body-text-color); text-decoration: none; }
+.footer-links a:hover { color: var(--accent-strong); }
+.footer-text { max-width: 26rem; }
+.footer-bottom p { font-size: .85rem; }
+.social-link-icon { font-size: 1.3rem; color: var(--body-text-color); }
+
+@media (max-width: 991.98px) {
+  .hero-grid { grid-template-columns: 1fr; padding: 120px 12px 64px; gap: 36px; }
+  .hero-badge { left: 12px; }
+  .search-card { margin-top: 0; }
+  .section { padding: 72px 0; }
+  .cta-card { padding: 36px 28px; }
+}
+@media (max-width: 575.98px) {
+  .hero-stats { gap: 24px; }
+  .hero-stats strong { font-size: 1.3rem; }
+  .search-card { padding: 20px; }
+  .reservation-success { flex-direction: column; align-items: flex-start; }
+}
