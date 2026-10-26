@@ -1,0 +1,31 @@
+@model string?
+@inject IConfiguration Config
+@{
+    ViewData["Title"] = "Giriş";
+}
+<div class="login">
+    <div class="login-card">
+        <a href="/" class="adm-logo dark">Go<span>Car</span> <small>Yönetim</small></a>
+        <h1>Panele giriş</h1>
+        @if (ViewData["Error"] is string err)
+        {
+            <div class="alert alert-bad">@err</div>
+        }
+        <form method="post" action="/yonetim/giris" asp-antiforgery="true" class="stack">
+            <input type="hidden" name="returnUrl" value="@Model">
+            <label>E-posta <input name="email" type="email" required autocomplete="username" autofocus></label>
+            <label>Şifre <input name="password" type="password" required autocomplete="current-password"></label>
+            <button class="btn btn-primary btn-block">Giriş yap</button>
+        </form>
+        @if (Config.GetValue("Demo:Enabled", false))
+        {
+            <div class="or"><span>ya da</span></div>
+            <form method="post" action="/yonetim/giris" asp-antiforgery="true">
+                <input type="hidden" name="demo" value="true">
+                <input type="hidden" name="returnUrl" value="@Model">
+                <button class="btn btn-accent btn-block">@Ui.Icon("key") Demo hesabıyla incele</button>
+            </form>
+            <p class="muted small center">Demo hesabı salt okunurdur; ziyaretçilerin kişisel bilgileri maskelenir.</p>
+        }
+    </div>
+</div>

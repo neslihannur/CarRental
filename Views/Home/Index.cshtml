@@ -1,447 +1,285 @@
-@model HomeViewModel
+@model HomePage
 @{
-    var tr = new System.Globalization.CultureInfo("tr-TR");
-    var days = Model.ReturnDate.DayNumber - Model.PickupDate.DayNumber;
-    var reservationCode = TempData["ReservationCode"] as string;
-    var reservationError = TempData["ReservationError"] as string;
+    ViewData["DarkHeader"] = true;
+    ViewData["Trip"] = Model.Trip;
+    var testimonials = new (string Name, string Meta, string Text, string? Img)[]
+    {
+        ("Elif K.", "Ferrari 458 · İstanbul", "Evlilik yıldönümümüz için kiraladık. Araç kapıda tertemiz ve dolu depoyla bekliyordu; teslim 10 dakika sürdü.", "commentor-item1.jpg"),
+        ("Burak A.", "BMW 520i · Ankara", "İş seyahatlerimde artık tek adresim. Uçuşum rötar yaptı, ekip gece yarısı beni bekledi.", "commentor-item2.jpg"),
+        ("Zeynep D.", "Defender 110 · Antalya", "Kamp tatili için Defender aldık. Tavan rafı, çeki demiri… her şey hazırdı. Fiyat da sürpriz değildi.", "commentor-item3.jpg"),
+        ("Mert Y.", "AMG GT R · İzmir", "Rezervasyon iki dakika sürdü, onay maili ve takvim daveti anında geldi. Böyle olmalı.", null),
+        ("Selin Ö.", "Ford Expedition · İstanbul", "6 kişilik aile + 5 bavul. Havalimanında karşılandık, çocuk koltuğu takılıydı.", null),
+        ("Kerem Ş.", "Porsche 911 · İstanbul", "Klasik bir 911'i bu kadar özenle kiralayan başka yer bilmiyorum. Teslimde kısa bir sürüş eğitimi bile verdiler.", null),
+        ("Defne Ç.", "Suzuki Samurai · Antalya", "Sahil yolları için birebir. Uygun fiyat, sıfır sürpriz ve çok eğlenceli.", null),
+        ("Onur T.", "BMW 2 Serisi · İstanbul", "Hafta sonu kaçamağı için aldım; iade sürecinde provizyon aynı gün kalktı.", null),
+    };
+    var faqs = new (string Q, string A)[]
+    {
+        ("Araç kiralamak için neler gerekli?", "Geçerli sürücü belgesi, kimlik veya pasaport ve sürücü adına kredi kartı yeterli. Araca göre en az 21–30 yaş ve 2–8 yıllık ehliyet şartı aranır; şartlar her aracın sayfasında yazıyor."),
+        ("Ödemeyi ne zaman yapıyorum?", "Online rezervasyonda kartınızdan çekim yapılmaz. Ödeme araç tesliminde kredi kartıyla alınır; aynı anda araç sınıfına göre provizyon bloke edilir ve iadeden sonra kaldırılır."),
+        ("Rezervasyonumu iptal edebilir miyim?", "Evet. Onay e-postasındaki bağlantıdan ya da Rezervasyonum sayfasından teslim saatine kadar ücretsiz iptal edebilirsiniz."),
+        ("Aracı farklı bir şubeye bırakabilir miyim?", "Evet. Aynı şehirdeki farklı şubeye iade 750 ₺, farklı şehre iade 2.500 ₺ tek yön ücretiyle mümkündür; fiyat rezervasyon özetinde hemen görünür."),
+        ("Uzun süreli kiralamada indirim var mı?", "7 gün ve üzeri %10, 14 gün ve üzeri %15, 30 gün ve üzeri %20 indirim otomatik uygulanır. Daha uzun süreler için kurumsal teklif alabilirsiniz."),
+        ("Kasko ve sigorta dahil mi?", "Tüm araçlarımızda kasko ve zorunlu trafik sigortası fiyata dahildir. Tam Koruma Paketi ile hasar muafiyetini sıfırlayabilirsiniz."),
+    };
 }
 
-<section id="hero" class="position-relative overflow-hidden">
-    <div class="pattern-overlay pattern-left position-absolute">
-        <img src="~/images/hero-pattern-left.png" alt="">
+<section class="hero" data-hero>
+    <div class="hero-media" aria-hidden="true">
+        <img src="/images/banner-img.jpg" alt="" data-hero-img fetchpriority="high">
     </div>
-    <div class="container hero-grid">
-        <div class="hero-text" data-aos="fade-up">
-            <span class="eyebrow"><iconify-icon icon="solar:star-bold"></iconify-icon> 4,9 / 5 · 12.000+ mutlu sürücü</span>
-            <h1>Yola çıkmanın <span class="text-primary">en kolay</span> yolu.</h1>
-            <p class="hero-paragraph">
-                Sedan'dan arazi aracına geniş filomuzdan aracınızı seçin, dakikalar içinde rezervasyonunuzu yapın.
-                Havalimanında ya da kapınızda teslim.
-            </p>
-            <div class="d-flex flex-wrap gap-3 mt-4">
-                <a href="#filo" class="btn btn-primary btn-lg-pill">Filoyu Keşfet</a>
-                <a href="#process" class="btn btn-ghost btn-lg-pill">Nasıl çalışır?</a>
-            </div>
-            <ul class="hero-stats list-unstyled">
-                <li><strong>@Fleet.Cars.Count</strong><span>premium model</span></li>
-                <li><strong>7</strong><span>teslim noktası</span></li>
-                <li><strong>7/24</strong><span>yol yardımı</span></li>
-            </ul>
+    <div class="container hero-content">
+        <p class="eyebrow eyebrow-light" data-hero-in><span class="dot"></span> 7 şube · 10 model · 7/24 teslim</p>
+        <h1 class="hero-title" data-split>Yolculuğun, <em>senin</em> kurallarınla.</h1>
+        <p class="hero-lead" data-hero-in>Havalimanında karşılama, kasko dahil şeffaf fiyatlar ve iki dakikada onaylanan rezervasyon. Sadece direksiyona geç.</p>
+        <div class="hero-actions" data-hero-in>
+            <a href="/filo" class="btn btn-accent btn-lg magnetic">Filoyu keşfet @Ui.Icon("arrow")</a>
+            <a href="/kurumsal" class="btn btn-ghost btn-lg">Kurumsal kiralama</a>
         </div>
-        <div class="hero-visual" data-aos="fade-up" data-aos-delay="150">
-            <img src="~/images/banner-img.jpg" alt="Mercedes-AMG GT" fetchpriority="high">
-            <div class="hero-badge">
-                <iconify-icon icon="solar:shield-check-bold"></iconify-icon>
-                <div><strong>Tam kasko dahil</strong><span>Sürpriz ücret yok</span></div>
-            </div>
+    </div>
+    <div class="container hero-search" data-hero-in>
+        <partial name="_SearchBar" model="Model.Trip" />
+    </div>
+    <div class="hero-scroll" aria-hidden="true"><span></span></div>
+</section>
+
+<section class="brands" aria-label="Filomuzdaki markalar">
+    <div class="marquee">
+        <div class="marquee-track">
+            @for (var i = 0; i < 2; i++)
+            {
+                foreach (var b in new[] { "BMW", "Mercedes-Benz", "Porsche", "Ferrari", "Land Rover", "Ford", "Mercedes-AMG", "Suzuki" })
+                {
+                    <span>@b</span><span class="sep">✦</span>
+                }
+            }
         </div>
     </div>
 </section>
 
-<section id="search">
+<section class="section statement">
     <div class="container">
-        <form class="search-card row g-3 align-items-end" method="get" action="/#filo" data-aos="fade-up">
-            <div class="col-12 col-md-6 col-lg-3">
-                <label for="tip" class="form-label">Araç tipi</label>
-                <div class="field-icon">
-                    <iconify-icon icon="solar:wheel-outline"></iconify-icon>
-                    <select class="form-select" id="tip" name="tip">
-                        <option value="">Tüm araçlar</option>
-                        @foreach (var c in Fleet.Categories)
-                        {
-                            <option value="@c" selected="@(c == Model.Category)">@c</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-3">
-                <label for="konum" class="form-label">Alış noktası</label>
-                <div class="field-icon">
-                    <iconify-icon icon="solar:map-point-outline"></iconify-icon>
-                    <select class="form-select" id="konum" name="konum">
-                        @foreach (var l in Fleet.Locations)
-                        {
-                            <option selected="@(l == Model.Location)">@l</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            <div class="col-6 col-lg-2">
-                <label for="alis" class="form-label">Alış tarihi</label>
-                <input type="date" class="form-control" id="alis" name="alis" value="@Model.PickupDate.ToString("yyyy-MM-dd")" data-min-today>
-            </div>
-            <div class="col-6 col-lg-2">
-                <label for="donus" class="form-label">Dönüş tarihi</label>
-                <input type="date" class="form-control" id="donus" name="donus" value="@Model.ReturnDate.ToString("yyyy-MM-dd")" data-min-today>
-            </div>
-            <div class="col-12 col-lg-2 d-grid">
-                <button class="btn btn-primary btn-search" type="submit">
-                    <iconify-icon icon="solar:magnifer-linear"></iconify-icon> Araç Bul
-                </button>
-            </div>
-        </form>
+        <p class="statement-text" data-reveal-words>Araç kiralamak; uzun formlar, gizli ücretler ve kuyruklar demek olmamalı. GoCar'da fiyat ilk ekranda belli, araç teslimde tertemiz ve ekibimiz uçağınız rötar yapsa bile sizi bekliyor.</p>
+        <div class="stats">
+            <div class="stat" data-anim="fade-up"><strong data-count="@Model.Vehicles">@Model.Vehicles</strong><span>araçlık filo</span></div>
+            <div class="stat" data-anim="fade-up"><strong data-count="@Catalog.Branches.Count">@Catalog.Branches.Count</strong><span>havalimanı ve şehir şubesi</span></div>
+            <div class="stat" data-anim="fade-up"><strong data-count="@(12000 + Model.Rentals)" data-format="tr">@((12000 + Model.Rentals).ToString("N0", Catalog.Tr))</strong><span>tamamlanan kiralama</span></div>
+            <div class="stat" data-anim="fade-up"><strong><span data-count="4.9" data-decimals="1">4,9</span><small>/5</small></strong><span>müşteri puanı</span></div>
+        </div>
     </div>
 </section>
 
-@if (reservationCode is not null)
-{
-    <section id="rezervasyon" class="container">
-        <div class="reservation-success" data-aos="zoom-in">
-            <iconify-icon icon="solar:check-circle-bold" class="success-icon"></iconify-icon>
-            <div>
-                <h3>Rezervasyonunuz alındı, @TempData["ReservationName"]!</h3>
-                <p class="mb-1"><strong>@TempData["ReservationCar"]</strong> · @TempData["ReservationSummary"]</p>
-                <p class="mb-0">Toplam tutar <strong>@TempData["ReservationTotal"]</strong> · Rezervasyon kodu <span class="code">@reservationCode</span></p>
+<section class="fleet-rail" data-rail>
+    <div class="container rail-head">
+        <div>
+            <p class="eyebrow">Filo</p>
+            <h2 class="section-title" data-anim="fade-up">Her yolculuğa <em>bir</em> karakter.</h2>
+        </div>
+        <div class="rail-head-side">
+            <p>Fiyatlar @Model.Trip.Days günlük örnek kiralama içindir; tarihleri seçince anında güncellenir.</p>
+            <a href="/filo" class="btn btn-outline">Tüm filo @Ui.Icon("arrow")</a>
+        </div>
+    </div>
+    <div class="rail-viewport">
+        <div class="rail-track" data-rail-track>
+            @foreach (var card in Model.Featured)
+            {
+                <partial name="_CarCard" model="card" view-data="ViewData" />
+            }
+            <a href="/filo" class="rail-more">
+                <span>Tüm araçları<br>karşılaştır</span>
+                @Ui.Icon("arrow-up-right")
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="section categories">
+    <div class="container">
+        <div class="section-head">
+            <p class="eyebrow">Kategoriler</p>
+            <h2 class="section-title" data-anim="fade-up">Ne arıyorsun?</h2>
+        </div>
+        <div class="cat-grid">
+            @foreach (var (name, img, text) in new[] {
+                ("Sedan", "item-large5.jpg", "İş seyahati ve uzun yol konforu"),
+                ("SUV", "item-large2.jpg", "Geniş aileler, büyük bagajlar"),
+                ("Spor", "item-large9.jpg", "Özel günler, unutulmaz sürüşler"),
+                ("Arazi", "item-large3.jpg", "Kamp, kayak ve keşif") })
+            {
+                <a href="/filo?tip=@name" class="cat-tile" data-anim="card">
+                    <img src="/images/@img" alt="" loading="lazy">
+                    <div class="cat-tile-text">
+                        <h3>@name</h3>
+                        <p>@text</p>
+                    </div>
+                    <span class="cat-tile-arrow">@Ui.Icon("arrow-up-right")</span>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section steps-section">
+    <div class="container steps-layout">
+        <div class="steps-intro">
+            <p class="eyebrow">Nasıl çalışır</p>
+            <h2 class="section-title">Dört adımda <em>yoldasın.</em></h2>
+            <p class="muted">Kayıt yok, ön ödeme yok. Rezervasyonun anında onaylanır; tüm ayrıntılar e-postana ve takvimine gelir.</p>
+            <a href="/filo" class="btn btn-dark">Hemen başla @Ui.Icon("arrow")</a>
+        </div>
+        <ol class="steps" data-steps>
+            <li class="step">
+                <span class="step-num">01</span>
+                <div><h3>Tarih ve şubeni seç</h3><p>7 şubeden birini seç; farklı şehirde bırakmak istersen tek yön ücretini hemen gör.</p></div>
+            </li>
+            <li class="step">
+                <span class="step-num">02</span>
+                <div><h3>Aracını ve ek hizmetleri belirle</h3><p>Müsait araçlar anlık listelenir. Tam koruma, ek sürücü, çocuk koltuğu… fiyat canlı güncellenir.</p></div>
+            </li>
+            <li class="step">
+                <span class="step-num">03</span>
+                <div><h3>Onay e-postanı al</h3><p>Rezervasyon kodu, takvim daveti ve "rezervasyonu yönet" bağlantısı saniyeler içinde gelir.</p></div>
+            </li>
+            <li class="step">
+                <span class="step-num">04</span>
+                <div><h3>Anahtarı teslim al</h3><p>Ehliyetin ve kredi kartınla şubeye gel; ödeme teslimde, provizyon iadede kalkar.</p></div>
+            </li>
+            <span class="steps-line" aria-hidden="true"><span data-steps-line></span></span>
+        </ol>
+    </div>
+</section>
+
+<section class="section why">
+    <div class="container why-layout">
+        <div class="why-media" data-clip-reveal>
+            <img src="/images/item-large8.jpg" alt="Mercedes-AMG GT R" loading="lazy" data-parallax>
+            <div class="why-badge">
+                <strong>%100</strong>
+                <span>kasko dahil fiyat</span>
             </div>
         </div>
-    </section>
+        <div class="why-list">
+            <p class="eyebrow">Neden GoCar</p>
+            <h2 class="section-title" data-anim="fade-up">Küçük ayrıntılar, <em>büyük</em> fark.</h2>
+            <div class="features">
+                @foreach (var (icon, t, d) in new[] {
+                    ("shield", "Kasko dahil, sürpriz yok", "Gördüğün fiyat KDV ve kasko dahil son fiyat."),
+                    ("plane", "Havalimanında karşılama", "Uçuşunu takip ederiz; rötar olsa da bekleriz."),
+                    ("calendar", "Teslime kadar ücretsiz iptal", "Planın mı değişti? Tek tıkla iptal et."),
+                    ("sparkle", "Her kiralamada derin temizlik", "Araçlar her teslim öncesi 42 noktada kontrol edilir."),
+                    ("headset", "7/24 yol yardım", "Lastik, akü, kaza… tek numara, her saat."),
+                    ("card", "Ön ödeme yok", "Ödeme teslimde; provizyon iadede kalkar.") })
+                {
+                    <div class="feature" data-anim="fade-up">
+                        <span class="feature-icon">@Ui.Icon(icon)</span>
+                        <div><h3>@t</h3><p>@d</p></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section testimonials">
+    <div class="container section-head center">
+        <p class="eyebrow">Yorumlar</p>
+        <h2 class="section-title" data-anim="fade-up">Direksiyondakiler <em>anlatıyor.</em></h2>
+    </div>
+    @for (var row = 0; row < 2; row++)
+    {
+        var items = row == 0 ? testimonials.Take(4) : testimonials.Skip(4);
+        <div class="marquee marquee-cards @(row == 1 ? "marquee-reverse" : "")">
+            <div class="marquee-track">
+                @for (var i = 0; i < 2; i++)
+                {
+                    foreach (var t in items)
+                    {
+                        <figure class="quote" aria-hidden="@(i == 1 ? "true" : "false")">
+                            <div class="stars">@for (var s = 0; s < 5; s++) { @Ui.Icon("star") }</div>
+                            <blockquote>@t.Text</blockquote>
+                            <figcaption>
+                                @if (t.Img is not null)
+                                {
+                                    <img src="/images/@t.Img" alt="" loading="lazy">
+                                }
+                                else
+                                {
+                                    <span class="avatar">@t.Name[0]</span>
+                                }
+                                <span><strong>@t.Name</strong><small>@t.Meta</small></span>
+                            </figcaption>
+                        </figure>
+                    }
+                }
+            </div>
+        </div>
+    }
+</section>
+
+<section class="section branches" id="subeler">
+    <div class="container">
+        <div class="section-head split">
+            <div>
+                <p class="eyebrow">Şubeler</p>
+                <h2 class="section-title" data-anim="fade-up">Seni <em>indiğin yerde</em> karşılıyoruz.</h2>
+            </div>
+            <p class="muted">Havalimanı şubelerimiz 7/24 açık. Şehir şubelerinde 08:00–22:00 arası teslim alıp bırakabilirsin.</p>
+        </div>
+        <div class="branch-list">
+            @foreach (var b in Catalog.Branches)
+            {
+                <a class="branch" href="/filo?sube=@b.Code&donusSube=@b.Code" data-anim="fade-up">
+                    <span class="branch-city">@b.City</span>
+                    <span class="branch-name">@Ui.Icon(b.IsAirport ? "plane" : "building") @b.Name</span>
+                    <span class="branch-addr">@b.Address</span>
+                    <span class="branch-hours">@Ui.Icon("clock") @b.Hours</span>
+                    <span class="branch-go">@Ui.Icon("arrow")</span>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section corporate-band">
+    <div class="container corporate-inner" data-anim="fade-up">
+        <div>
+            <p class="eyebrow eyebrow-light">Kurumsal</p>
+            <h2>Şirketin için <em>esnek</em> filo çözümleri.</h2>
+            <p>Aylık sabit fiyat, bakım ve lastik dahil, ihtiyaç değiştikçe araç değişimi. 1 iş gününde teklif.</p>
+        </div>
+        <a href="/kurumsal" class="btn btn-accent btn-lg magnetic">Teklif al @Ui.Icon("arrow")</a>
+    </div>
+</section>
+
+<section class="section faq" id="sss">
+    <div class="container faq-layout">
+        <div>
+            <p class="eyebrow">SSS</p>
+            <h2 class="section-title" data-anim="fade-up">Aklındaki <em>sorular.</em></h2>
+            <p class="muted">Cevabı bulamadın mı? <a href="/iletisim" class="link">Bize yaz</a>, mesai saatlerinde 1 saat içinde dönüyoruz.</p>
+        </div>
+        <div class="accordion">
+            @foreach (var (q, a) in faqs)
+            {
+                <details class="acc" data-anim="fade-up">
+                    <summary>@q <span class="acc-icon">@Ui.Icon("plus")</span></summary>
+                    <div class="acc-body"><p>@a</p></div>
+                </details>
+            }
+        </div>
+    </div>
+</section>
+
+@section Head {
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "AutoRental",
+      "name": "GoCar Araç Kiralama",
+      "telephone": "+90 850 000 00 00",
+      "address": { "@@type": "PostalAddress", "streetAddress": "Büyükdere Cad. No: 185", "addressLocality": "İstanbul", "addressCountry": "TR" },
+      "openingHours": "Mo-Su 00:00-23:59"
+    }
+    </script>
 }
-
-<section id="filo" class="section">
-    <div class="container">
-        <div class="section-head" data-aos="fade-up">
-            <div>
-                <span class="eyebrow">Filomuz</span>
-                <h2>Her yolculuğa <span class="text-primary">uygun araç</span></h2>
-            </div>
-            <p>
-                @if (Model.Filtered)
-                {
-                    <text><strong>@Model.Cars.Count araç</strong> bulundu · @Model.PickupDate.ToString("d MMMM", tr) – @Model.ReturnDate.ToString("d MMMM", tr), @days gün</text>
-                }
-                else
-                {
-                    <text>Fiyatlara kasko, sınırsız kilometre ve KDV dahildir.</text>
-                }
-            </p>
-        </div>
-
-        <div class="category-pills" data-aos="fade-up">
-            <a href="/?#filo" class="@(Model.Category is null ? "active" : "")">Tümü</a>
-            @foreach (var c in Fleet.Categories)
-            {
-                <a href="/?tip=@c#filo" class="@(c == Model.Category ? "active" : "")">@c</a>
-            }
-        </div>
-
-        @if (reservationError is not null)
-        {
-            <div class="alert alert-warning mt-4">@reservationError</div>
-        }
-
-        <div class="row g-4 mt-1">
-            @foreach (var car in Model.Cars)
-            {
-                <div class="col-12 col-md-6 col-xl-4" data-aos="fade-up">
-                    <article class="car-card">
-                        <div class="car-media">
-                            <img src="~/images/@car.Image" alt="@car.Brand @car.Model" loading="lazy">
-                            <span class="car-tag">@car.Category</span>
-                        </div>
-                        <div class="car-body">
-                            <p class="car-brand">@car.Brand · @car.Year</p>
-                            <h4>@car.Model</h4>
-                            <p class="car-tagline">@car.Tagline</p>
-                            <ul class="car-specs list-unstyled">
-                                <li><iconify-icon icon="solar:users-group-rounded-outline"></iconify-icon> @car.Seats kişi</li>
-                                <li><iconify-icon icon="solar:settings-outline"></iconify-icon> @car.Transmission</li>
-                                <li><iconify-icon icon="solar:gas-station-outline"></iconify-icon> @car.Fuel</li>
-                            </ul>
-                            <div class="car-foot">
-                                <div class="car-price">
-                                    <strong>@car.DailyPrice.ToString("N0", tr) ₺</strong><span>/ gün</span>
-                                </div>
-                                <button type="button" class="btn btn-primary btn-rent"
-                                        data-bs-toggle="modal" data-bs-target="#reserveModal"
-                                        data-car-id="@car.Id" data-car-name="@car.Brand @car.Model"
-                                        data-car-price="@car.DailyPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                        data-car-image="@Url.Content("~/images/" + car.Image)">
-                                    Kirala
-                                </button>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            }
-        </div>
-
-        @if (Model.Cars.Count == 0)
-        {
-            <p class="text-center mt-5">Bu tipte araç kalmadı. <a href="/#filo">Tüm araçlara göz atın.</a></p>
-        }
-    </div>
-</section>
-
-<section id="process" class="section section-soft">
-    <div class="container">
-        <div class="text-center" data-aos="fade-up">
-            <span class="eyebrow">Nasıl çalışır</span>
-            <h2>Dört adımda <span class="text-primary">yoldasınız</span></h2>
-        </div>
-        <div class="row g-4 mt-4">
-            @{
-                var steps = new[]
-                {
-                    ("solar:wheel-outline", "Aracınızı seçin", "Filodan ihtiyacınıza uygun aracı tip ve tarihe göre filtreleyin."),
-                    ("solar:calendar-mark-outline", "Tarih ve yer", "Havalimanı, ofis ya da adresinize teslim noktasını belirleyin."),
-                    ("solar:document-add-outline", "Rezervasyon", "Bilgilerinizi girin, toplam tutarı anında görün; ön ödeme yok."),
-                    ("solar:key-minimalistic-outline", "Anahtar teslim", "Ehliyetinizi gösterin, aracınızı teslim alın ve yola çıkın."),
-                };
-            }
-            @for (var i = 0; i < steps.Length; i++)
-            {
-                var (icon, title, text) = steps[i];
-                <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="@(i * 100)">
-                    <div class="step">
-                        <span class="step-no">0@(i + 1)</span>
-                        <iconify-icon icon="@icon" class="step-icon"></iconify-icon>
-                        <h5>@title</h5>
-                        <p>@text</p>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</section>
-
-<section id="testimonial" class="position-relative">
-    <div class="pattern-overlay pattern-left position-absolute">
-        <img src="~/images/testimonial-pattern.png" alt="">
-    </div>
-    <div class="container py-5 my-5">
-        <div class="swiper testimonial-swiper">
-            <div class="swiper-wrapper">
-                @foreach (var (quote, name, img) in new[]
-                {
-                    ("Gece yarısı indiğimiz halde araç kapıdaydı. Teslim beş dakika sürdü, araç tertemizdi.", "Elif K. · Sabiha Gökçen", "commentor-item1.jpg"),
-                    ("Defender ile Kaçkarlar'a çıktık; yol yardımı bir telefon kadar yakındı. Kesinlikle tekrar.", "Mert A. · Trabzon rotası", "commentor-item2.jpg"),
-                    ("Fiyat ne gösterildiyse o çıktı. Kiralamadan önce toplam tutarı görmek büyük rahatlık.", "Zeynep D. · İzmir", "commentor-item3.jpg"),
-                })
-                {
-                    <div class="swiper-slide text-center">
-                        <div class="offset-md-2 col-md-8">
-                            <iconify-icon icon="mdi:format-quote-open" class="testimonial-icon"></iconify-icon>
-                            <p class="testimonial-paragraph">@quote</p>
-                            <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
-                                <img src="~/images/@img" alt="" class="avatar">
-                                <h5 class="mb-0">@name</h5>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="swiper-pagination position-unset mt-4"></div>
-        </div>
-    </div>
-</section>
-
-<section id="pricing" class="section">
-    <div class="container">
-        <div class="text-center" data-aos="fade-up">
-            <span class="eyebrow">Uzun dönem kiralama</span>
-            <h2>Şirketiniz ve siz için <span class="text-primary">paketler</span></h2>
-        </div>
-        <div class="d-flex justify-content-center mt-4">
-            <label class="pt-2" id="monthly-label">Aylık</label>
-            <span class="form-check form-switch p-0">
-                <input class="form-check-input mx-2" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                <label class="pt-2" id="yearly-label" for="flexSwitchCheckChecked">Yıllık <small class="save-badge">%15 tasarruf</small></label>
-            </span>
-        </div>
-        <div class="row py-4 g-4">
-            <div class="col-lg-3 col-sm-6 col-12">
-                <div class="pricing-lable pt-5 h-100">
-                    <div class="pt-3 ps-2">
-                        <h3>Uzun dönemde daha az ödeyin</h3>
-                        <p>Bakım, sigorta ve lastik değişimi pakete dahil. Siz sadece sürün.</p>
-                    </div>
-                    <iconify-icon class="pricing-lable-icon" icon="fluent:vehicle-car-profile-ltr-20-regular"></iconify-icon>
-                </div>
-            </div>
-            @foreach (var (name, monthly, features, featured) in new[]
-            {
-                ("Bireysel", 28_900m, new[] { "Kompakt sedan", "Aylık 2.500 km", "Kasko ve trafik sigortası", "Periyodik bakım" }, false),
-                ("Kurumsal", 41_500m, new[] { "Premium sedan veya SUV", "Aylık 4.000 km", "Kasko ve trafik sigortası", "Periyodik bakım", "İkame araç" }, true),
-                ("Filo", 36_900m, new[] { "5+ araç, araç başı fiyat", "Sınırsız kilometre", "Kasko ve trafik sigortası", "Bakım ve lastik", "İkame araç", "Filo yöneticisi" }, false),
-            })
-            {
-                <div class="col-lg-3 col-sm-6 col-12">
-                    <div class="pricing-detail py-5 text-center h-100 @(featured ? "featured" : "")">
-                        <div class="pricing-content">
-                            <h5 class="@(featured ? "price-recommend" : "")">@name</h5>
-                            <div class="content monthly pt-2">
-                                <h3>@monthly.ToString("N0", tr) ₺</h3><small>/ ay</small>
-                            </div>
-                            <div class="content yearly pt-2">
-                                <h3>@((monthly * 12 * 0.85m).ToString("N0", tr)) ₺</h3><small>/ yıl</small>
-                            </div>
-                            <div class="pt-4">
-                                @foreach (var f in features)
-                                {
-                                    <p>✓ @f</p>
-                                }
-                            </div>
-                        </div>
-                        <div class="pricing-button">
-                            <a href="#action" class="btn btn-primary @(featured ? "active" : "")">Teklif Al</a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</section>
-
-<section id="services" class="section section-soft">
-    <div class="container">
-        <div class="row align-items-end">
-            <div class="col-lg-6" data-aos="fade-up">
-                <span class="eyebrow">Neden GoCar</span>
-                <h2>Kiralamanın <span class="text-primary">zahmetsiz</span> hali</h2>
-            </div>
-            <div class="col-lg-6" data-aos="fade-up">
-                <p class="mt-3 mt-lg-0">
-                    Kiralama sürecindeki küçük sürprizleri ortadan kaldırmak için çalışıyoruz: net fiyat, temiz araç,
-                    zamanında teslim ve yolda kaldığınızda ulaşabileceğiniz bir ekip.
-                </p>
-            </div>
-        </div>
-        <div class="row g-4 mt-4">
-            @foreach (var (icon, title, text) in new[]
-            {
-                ("solar:shield-check-outline", "Güvenli ödeme", "3D Secure ile ödeme; depozito teslimde iade edilir."),
-                ("solar:wheel-angle-outline", "Her sınıftan araç", "Sedan, SUV, spor ve arazi araçları tek filoda."),
-                ("solar:plain-2-outline", "Havalimanı teslimi", "Uçuşunuzu takip eder, gecikmede bekleriz."),
-                ("solar:call-chat-outline", "7/24 destek", "Yol yardımı ve müşteri hizmetleri her an yanınızda."),
-            })
-            {
-                <div class="col-6 col-lg-3" data-aos="fade-up">
-                    <div class="services-components text-center pt-4 pb-3 h-100">
-                        <iconify-icon class="services-icon my-2" icon="@icon"></iconify-icon>
-                        <h5>@title</h5>
-                        <p>@text</p>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-</section>
-
-<section id="faq" class="section">
-    <div class="container">
-        <div class="text-center" data-aos="fade-up">
-            <span class="eyebrow">SSS</span>
-            <h2>Aklınıza takılanlar</h2>
-        </div>
-        <div class="accordion col-md-8 offset-md-2 mt-4" id="faqAccordion">
-            @{
-                var faqs = new[]
-                {
-                    ("Araç kiralamak için hangi belgeler gerekiyor?", "Geçerli bir sürücü belgesi (en az 2 yıllık), kimlik ya da pasaport ve sürücü adına bir kredi kartı yeterli. Spor ve arazi sınıfında ehliyet yaşı en az 5 yıl olmalı."),
-                    ("Fiyatlara neler dahil?", "Kasko, zorunlu trafik sigortası, KDV ve sınırsız kilometre günlük fiyata dahildir. Yakıt, köprü ve otoyol geçişleri kullanıma göre ayrıca hesaplanır."),
-                    ("Rezervasyonu iptal edebilir miyim?", "Alış saatinden 24 saat öncesine kadar ücretsiz iptal edebilirsiniz. Daha geç iptallerde bir günlük kira bedeli alınır."),
-                    ("Aracı farklı bir noktada bırakabilir miyim?", "Evet. Teslim noktalarımızdan herhangi birine bırakabilirsiniz; şehirler arası bırakmalarda mesafeye göre ek ücret uygulanır."),
-                };
-            }
-            @for (var i = 0; i < faqs.Length; i++)
-            {
-                var (q, a) = faqs[i];
-                <div class="accordion-item mt-3">
-                    <h5 class="accordion-header">
-                        <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#faq@(i)" aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="faq@(i)">
-                            @q
-                        </button>
-                    </h5>
-                    <div id="faq@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body"><p>@a</p></div>
-                    </div>
-                </div>
-                <hr>
-            }
-        </div>
-    </div>
-</section>
-
-<section id="action" class="position-relative">
-    <div class="container">
-        <div class="cta-card" data-aos="fade-up">
-            <div class="pattern-overlay pattern-right position-absolute">
-                <img src="~/images/call-to-action-pattern.png" alt="">
-            </div>
-            <div class="row align-items-center position-relative">
-                <div class="col-lg-7">
-                    <h2>Yolculuğunuz bir <span class="text-primary">tık uzakta.</span></h2>
-                    <p>Kurumsal teklif, uzun dönem kiralama ya da özel istekleriniz için ekibimiz 7/24 ulaşılabilir.</p>
-                </div>
-                <div class="col-lg-5 d-flex flex-wrap gap-3 justify-content-lg-end">
-                    <a href="#filo" class="btn btn-primary btn-lg-pill">Araç Seç</a>
-                    <a href="tel:08500000000" class="btn btn-light btn-lg-pill"><iconify-icon icon="solar:phone-outline"></iconify-icon> 0850 000 00 00</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<div class="modal fade" id="reserveModal" tabindex="-1" aria-labelledby="reserveTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <form method="post" action="/rezervasyon">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="CarId" id="r-car-id">
-                <div class="modal-header">
-                    <div class="d-flex align-items-center gap-3">
-                        <img id="r-car-image" src="" alt="" class="modal-car">
-                        <div>
-                            <p class="car-brand mb-0">Rezervasyon</p>
-                            <h4 class="modal-title" id="reserveTitle">Araç</h4>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="r-location">Alış noktası</label>
-                            <select class="form-select" id="r-location" name="PickupLocation" required>
-                                @foreach (var l in Fleet.Locations)
-                                {
-                                    <option selected="@(l == Model.Location)">@l</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label" for="r-pickup">Alış</label>
-                            <input type="date" class="form-control" id="r-pickup" name="PickupDate" value="@Model.PickupDate.ToString("yyyy-MM-dd")" required data-min-today>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label class="form-label" for="r-return">Dönüş</label>
-                            <input type="date" class="form-control" id="r-return" name="ReturnDate" value="@Model.ReturnDate.ToString("yyyy-MM-dd")" required data-min-today>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="r-name">Ad soyad</label>
-                            <input class="form-control" id="r-name" name="FullName" required maxlength="80" autocomplete="name">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="r-phone">Telefon</label>
-                            <input class="form-control" id="r-phone" name="Phone" type="tel" required maxlength="20" autocomplete="tel" placeholder="05xx xxx xx xx">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="r-email">E-posta</label>
-                            <input class="form-control" id="r-email" name="Email" type="email" required maxlength="120" autocomplete="email">
-                        </div>
-                        <input name="Website" class="d-none" tabindex="-1" autocomplete="off" aria-hidden="true">
-                    </div>
-                    <div class="price-summary mt-4">
-                        <span id="r-days">—</span>
-                        <strong id="r-total">—</strong>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <small class="text-muted me-auto">Demo projedir, ödeme alınmaz.</small>
-                    <button type="submit" class="btn btn-primary">Rezervasyonu Tamamla</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>

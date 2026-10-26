@@ -1,15 +1,17 @@
-@model ErrorViewModel
+@model int
 @{
-    ViewData["Title"] = "Hata";
+    var notFound = Model == 404;
+    var tooMany = Model == 429;
+    ViewData["Title"] = notFound ? "Sayfa bulunamadı" : tooMany ? "Çok fazla istek" : "Bir şeyler ters gitti";
 }
-<section class="section page-top text-center">
-    <div class="container narrow">
-        <h2>Bir şeyler ters gitti</h2>
-        <p>İsteğinizi şu an tamamlayamadık. Lütfen birazdan tekrar deneyin.</p>
-        @if (Model.ShowRequestId)
-        {
-            <p><small>Talep no: <code>@Model.RequestId</code></small></p>
-        }
-        <a href="/" class="btn btn-primary mt-3">Ana sayfaya dön</a>
+<section class="error-page">
+    <div class="container">
+        <span class="error-code">@Model</span>
+        <h1 class="page-title">@(notFound ? "Bu yol çıkmaz sokak." : tooMany ? "Biraz yavaşlayalım." : "Bir şeyler ters gitti.")</h1>
+        <p class="page-lead">@(notFound ? "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir." : tooMany ? "Kısa sürede çok fazla istek geldi. Birkaç dakika sonra tekrar dene." : "Ekibimiz haberdar edildi. Lütfen birazdan tekrar dene.")</p>
+        <div class="hero-actions">
+            <a href="/" class="btn btn-dark btn-lg">Ana sayfa</a>
+            <a href="/filo" class="btn btn-outline btn-lg">Filoya göz at</a>
+        </div>
     </div>
 </section>

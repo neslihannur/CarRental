@@ -1,0 +1,52 @@
+@model List<EmailMessage>
+@{
+    ViewData["Title"] = "E-postalar";
+    var demo = User.IsInRole("demo");
+    var durum = ViewData["Durum"] as string;
+    var ready = ViewData["SmtpReady"] is true;
+}
+@section Actions {
+    @if (!demo)
+    {
+        <form method="post" action="/yonetim/epostalar/deneme" asp-antiforgery="true"><button class="btn btn-sm">@Ui.Icon("mail") Deneme e-postası gönder</button></form>
+    }
+}
+@if (!ready)
+{
+    <div class="alert alert-warn">SMTP ayarlanmamış: e-postalar gönderilmeden "Skipped" olarak işaretleniyor. Coolify'da <code>Smtp__Host</code>, <code>Smtp__User</code>, <code>Smtp__Password</code> ortam değişkenlerini tanımlayın.</div>
+}
+<div class="toolbar">
+    <div class="tabs">
+        <a href="/yonetim/epostalar" class="@(string.IsNullOrEmpty(durum) ? "is-active" : "")">Tümü</a>
+        @foreach (var s in Enum.GetValues<EmailStatus>())
+        {
+            <a href="/yonetim/epostalar?durum=@s" class="@(durum == s.ToString() ? "is-active" : "")">@s</a>
+        }
+    </div>
+</div>
+<section class="card">
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>Durum</th><th>Alıcı</th><th>Konu</th><th>Tür</th><th>Tarih</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    <tr>
+                        <td><span class="mail-status ms-@m.Status.ToString().ToLower()">@m.Status</span>@if (m.Attempts > 0) { <small>@m.Attempts deneme</small> }</td>
+                        <td>@(demo ? Mask.Email(m.To) : m.To)</td>
+                        <td><a href="/yonetim/epostalar/@m.Id/onizleme" target="_blank" class="link">@m.Subject</a>@if (m.LastError is not null) { <small class="err">@m.LastError</small> }</td>
+                        <td>@m.Kind</td>
+                        <td>@Catalog.DateTimeShort(m.CreatedAt.AddHours(3))</td>
+                        <td>
+                            @if (!demo && m.Status is EmailStatus.Failed or EmailStatus.Skipped)
+                            {
+                                <form method="post" action="/yonetim/epostalar/@m.Id/tekrar" asp-antiforgery="true"><button class="btn btn-sm">Tekrar dene</button></form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Count == 0) { <tr><td colspan="6" class="empty-row">Henüz e-posta yok.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,33 @@
+@model List<ContactMessage>
+@{
+    ViewData["Title"] = "Mesajlar";
+    var demo = User.IsInRole("demo");
+    var tur = Context.Request.Query["tur"].ToString();
+}
+<div class="toolbar">
+    <div class="tabs">
+        <a href="/yonetim/mesajlar" class="@(tur == "" ? "is-active" : "")">Tümü</a>
+        <a href="/yonetim/mesajlar?tur=iletisim" class="@(tur == "iletisim" ? "is-active" : "")">İletişim</a>
+        <a href="/yonetim/mesajlar?tur=kurumsal" class="@(tur == "kurumsal" ? "is-active" : "")">Kurumsal teklif</a>
+    </div>
+</div>
+<section class="card">
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th></th><th>Gönderen</th><th>Konu</th><th>Tür</th><th>Tarih</th></tr></thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    <tr onclick="location.href='/yonetim/mesajlar/@m.Id'" class="@(m.IsRead ? "" : "unread")">
+                        <td>@if (!m.IsRead) { <span class="dot"></span> }</td>
+                        <td><strong>@(demo ? Mask.Name(m.Name) : m.Name)</strong><small>@(demo ? Mask.Email(m.Email) : m.Email)</small></td>
+                        <td>@(m.Company ?? m.Subject)<small>@(m.Message.Length > 70 ? m.Message[..70] + "…" : m.Message)</small></td>
+                        <td>@(m.Kind == "kurumsal" ? "Kurumsal" : "İletişim")</td>
+                        <td>@Catalog.DateTimeShort(m.CreatedAt.AddHours(3))</td>
+                    </tr>
+                }
+                @if (Model.Count == 0) { <tr><td colspan="5" class="empty-row">Henüz mesaj yok. Sitedeki iletişim ya da kurumsal formu doldurunca burada görünür.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</section>

@@ -1,0 +1,113 @@
+@model FleetPage
+@{
+    ViewData["Title"] = Model.Category is null ? "Filo" : $"{Model.Category} kiralama";
+    ViewData["Description"] = "GoCar filosu: BMW, Mercedes, Porsche, Ferrari, Land Rover ve daha fazlası. Tarih seç, müsait araçları ve toplam fiyatı anında gör.";
+    ViewData["Trip"] = Model.Trip;
+    var tq = Model.Trip.Query;
+    string Url(string? tip = null, string? vites = null, string? yakit = null, int? koltuk = null, string? sirala = null, bool clear = false)
+    {
+        var parts = new List<string> { tq };
+        var t = clear ? tip : tip ?? Model.Category;
+        if (!string.IsNullOrEmpty(t) && t != "*") parts.Add("tip=" + Uri.EscapeDataString(t));
+        var v = clear ? vites : vites ?? Model.Transmission;
+        if (!string.IsNullOrEmpty(v) && v != "*") parts.Add("vites=" + v);
+        var y = clear ? yakit : yakit ?? Model.Fuel;
+        if (!string.IsNullOrEmpty(y) && y != "*") parts.Add("yakit=" + y);
+        var k = clear ? koltuk : koltuk ?? Model.Seats;
+        if (k is > 0) parts.Add("koltuk=" + k);
+        var s = sirala ?? Model.Sort;
+        if (s != "onerilen") parts.Add("sirala=" + s);
+        return "/filo?" + string.Join("&", parts);
+    }
+    var available = Model.Cars.Count(c => c.Available);
+    var hidden = new Dictionary<string, string?> { ["tip"] = Model.Category, ["vites"] = Model.Transmission, ["yakit"] = Model.Fuel, ["koltuk"] = Model.Seats?.ToString(), ["sirala"] = Model.Sort == "onerilen" ? null : Model.Sort };
+}
+
+<section class="page-hero page-hero-dark">
+    <div class="container">
+        <p class="eyebrow eyebrow-light">Filo · @Model.TotalCount model</p>
+        <h1 class="page-title" data-split>@(Model.Category is null ? "Tüm araçlar" : Model.Category)</h1>
+        <p class="page-lead">@Ui.BranchName(Model.Trip.PickupBranch) · @Catalog.DateTimeShort(Model.Trip.PickupAt) → @Catalog.DateTimeShort(Model.Trip.ReturnAt)</p>
+    </div>
+</section>
+
+<div class="container search-dock">
+    <partial name="_SearchBar" model="Model.Trip" view-data='new ViewDataDictionary(ViewData) { ["Compact"] = true, ["Hidden"] = hidden, ["SubmitText"] = "Güncelle" }' />
+</div>
+
+<section class="section fleet-section">
+    <div class="container">
+        <div class="filters">
+            <div class="pills" role="tablist" aria-label="Kategori">
+                <a href="@Url(tip: "*")" class="pill @(Model.Category is null ? "is-active" : "")">Tümü</a>
+                @foreach (var cat in Catalog.Categories)
+                {
+                    <a href="@Url(tip: cat)" class="pill @(Model.Category == cat ? "is-active" : "")">@cat</a>
+                }
+            </div>
+            <div class="filter-selects">
+                <label class="select-pill">
+                    <span>Vites</span>
+                    <select data-nav>
+                        <option value="@Url(vites: "*")">Tümü</option>
+                        <option value="@Url(vites: "Otomatik")" selected="@(Model.Transmission == "Otomatik")">Otomatik</option>
+                        <option value="@Url(vites: "Manuel")" selected="@(Model.Transmission == "Manuel")">Manuel</option>
+                    </select>
+                </label>
+                <label class="select-pill">
+                    <span>Yakıt</span>
+                    <select data-nav>
+                        <option value="@Url(yakit: "*")">Tümü</option>
+                        <option value="@Url(yakit: "Benzin")" selected="@(Model.Fuel == "Benzin")">Benzin</option>
+                        <option value="@Url(yakit: "Dizel")" selected="@(Model.Fuel == "Dizel")">Dizel</option>
+                    </select>
+                </label>
+                <label class="select-pill">
+                    <span>Koltuk</span>
+                    <select data-nav>
+                        <option value="@Url(koltuk: 0)">Hepsi</option>
+                        @foreach (var n in new[] { 4, 5, 7 })
+                        {
+                            <option value="@Url(koltuk: n)" selected="@(Model.Seats == n)">@n+</option>
+                        }
+                    </select>
+                </label>
+                <label class="select-pill">
+                    <span>Sırala</span>
+                    <select data-nav>
+                        <option value="@Url(sirala: "onerilen")" selected="@(Model.Sort == "onerilen")">Önerilen</option>
+                        <option value="@Url(sirala: "artan")" selected="@(Model.Sort == "artan")">Fiyat: artan</option>
+                        <option value="@Url(sirala: "azalan")" selected="@(Model.Sort == "azalan")">Fiyat: azalan</option>
+                        <option value="@Url(sirala: "guc")" selected="@(Model.Sort == "guc")">Motor gücü</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <p class="result-count">
+            <strong>@Model.Cars.Count</strong> araç · <span class="ok-dot"></span> @available tanesi bu tarihlerde müsait
+            @if (Model.Trip.Days >= 7)
+            {
+                <span class="tag tag-accent">%@((int)(Catalog.DiscountRate(Model.Trip.Days) * 100)) uzun kiralama indirimi uygulandı</span>
+            }
+        </p>
+
+        @if (Model.Cars.Count == 0)
+        {
+            <div class="empty">
+                <h3>Bu filtrelere uyan araç yok</h3>
+                <p>Filtrelerden birini kaldırmayı dene.</p>
+                <a href="/filo?@tq" class="btn btn-dark">Filtreleri temizle</a>
+            </div>
+        }
+        else
+        {
+            <div class="car-grid">
+                @foreach (var card in Model.Cars)
+                {
+                    <partial name="_CarCard" model="card" view-data="ViewData" />
+                }
+            </div>
+        }
+    </div>
+</section>

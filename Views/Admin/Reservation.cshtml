@@ -1,0 +1,130 @@
+@model Reservation
+@{
+    var r = Model;
+    ViewData["Title"] = r.Code;
+    var demo = User.IsInRole("demo");
+    var mask = demo && !r.IsDemo;
+    var emails = (List<EmailMessage>)ViewData["Emails"]!;
+    var age = DateOnly.FromDateTime(r.PickupAt).Year - r.BirthDate.Year;
+}
+@section Actions {
+    <span class="status @Ui.StatusClass(r.Status)">@Catalog.StatusText(r.Status)</span>
+}
+
+<a href="/yonetim/rezervasyonlar" class="back">← Rezervasyonlar</a>
+
+<div class="detail">
+    <div class="detail-main">
+        <section class="card">
+            <div class="res-car">
+                <img src="/images/@r.Car.Image" alt="">
+                <div>
+                    <h2>@r.Car.Name</h2>
+                    <span class="muted">@r.Car.Category · @r.Car.Transmission · @r.Car.Fuel</span>
+                    @if (r.IsDemo) { <span class="tag">örnek veri</span> } else { <span class="tag tag-accent">siteden geldi</span> }
+                </div>
+            </div>
+            <div class="legs">
+                <div><span>Teslim</span><strong>@Catalog.DateTimeShort(r.PickupAt)</strong><small>@Ui.BranchName(r.PickupBranch)</small></div>
+                <div class="arrow">→<small>@r.Days gün</small></div>
+                <div><span>İade</span><strong>@Catalog.DateTimeShort(r.ReturnAt)</strong><small>@Ui.BranchName(r.ReturnBranch)</small></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Müşteri</h3>
+            <dl class="kv">
+                <dt>Ad soyad</dt><dd>@(mask ? Mask.Name(r.FullName) : r.FullName)</dd>
+                <dt>E-posta</dt><dd>@(mask ? Mask.Email(r.Email) : r.Email)</dd>
+                <dt>Telefon</dt><dd>@(mask ? Mask.Phone(r.Phone) : r.Phone)</dd>
+                <dt>Yaş / ehliyet</dt><dd>@age yaş · @r.LicenseYear yılından beri</dd>
+                @if (r.FlightNo is not null) { <dt>Uçuş</dt><dd>@r.FlightNo</dd> }
+                @if (r.Notes is not null) { <dt>Müşteri notu</dt><dd>@r.Notes</dd> }
+                <dt>Oluşturulma</dt><dd>@Catalog.DateTimeShort(r.CreatedAt.AddHours(3))</dd>
+                @if (r.CancelReason is not null) { <dt>İptal nedeni</dt><dd>@r.CancelReason</dd> }
+            </dl>
+        </section>
+
+        <section class="card">
+            <h3>Geçmiş</h3>
+            <ol class="tl">
+                @foreach (var e in r.Events.OrderBy(e => e.At).ThenBy(e => e.Id))
+                {
+                    <li><strong>@e.Title</strong><span>@Catalog.DateTimeShort(e.At.AddHours(3)) · @e.By@(e.Note is null ? "" : $" · {e.Note}")</span></li>
+                }
+            </ol>
+        </section>
+
+        <section class="card">
+            <h3>E-postalar</h3>
+            @if (emails.Count == 0) { <p class="muted">@(r.IsDemo ? "Örnek rezervasyonlara e-posta gönderilmez." : "Henüz e-posta yok.")</p> }
+            <ul class="mail-list">
+                @foreach (var m in emails)
+                {
+                    <li>
+                        <span class="mail-status ms-@m.Status.ToString().ToLower()">@m.Status</span>
+                        <a href="/yonetim/epostalar/@m.Id/onizleme" target="_blank">@m.Subject</a>
+                        <small>@m.Kind · @Catalog.DateTimeShort(m.CreatedAt.AddHours(3))</small>
+                    </li>
+                }
+            </ul>
+        </section>
+    </div>
+
+    <aside class="detail-side">
+        <section class="card">
+            <h3>Tutar</h3>
+            <dl class="kv kv-money">
+                <dt>Kiralama (@r.Days × @Catalog.Money(r.DailyPrice))</dt><dd>@Catalog.Money(r.BaseTotal)</dd>
+                @if (r.Discount > 0) { <dt>İndirim</dt><dd>−@Catalog.Money(r.Discount)</dd> }
+                @foreach (var code in r.Extras)
+                {
+                    if (Catalog.FindExtra(code) is { } e) { <dt>@e.Name</dt><dd>@Catalog.Money(e.PerDay ? e.Price * r.Days : e.Price)</dd> }
+                }
+                @if (r.OneWayFee > 0) { <dt>Tek yön</dt><dd>@Catalog.Money(r.OneWayFee)</dd> }
+                <dt class="total">Toplam</dt><dd class="total">@Catalog.Money(r.Total)</dd>
+                <dt>Provizyon</dt><dd>@Catalog.Money(r.Deposit)</dd>
+            </dl>
+        </section>
+
+        <section class="card">
+            <h3>İşlemler</h3>
+            @if (demo)
+            {
+                <p class="muted small">Demo modunda işlem yapılamaz.</p>
+            }
+            <div class="actions @(demo ? "is-disabled" : "")">
+                @if (r.Status == ReservationStatus.Confirmed)
+                {
+                    <form method="post" action="/yonetim/rezervasyonlar/@r.Id/teslim" asp-antiforgery="true"><button class="btn btn-primary btn-block" disabled="@demo">@Ui.Icon("key") Araç teslim edildi</button></form>
+                }
+                @if (r.Status == ReservationStatus.Active)
+                {
+                    <form method="post" action="/yonetim/rezervasyonlar/@r.Id/iade" asp-antiforgery="true"><button class="btn btn-primary btn-block" disabled="@demo">@Ui.Icon("check") İade alındı</button></form>
+                }
+                @if (r.Status is ReservationStatus.Confirmed or ReservationStatus.Active)
+                {
+                    <form method="post" action="/yonetim/rezervasyonlar/@r.Id/tekrar-gonder" asp-antiforgery="true"><button class="btn btn-block" disabled="@(demo || r.IsDemo)">@Ui.Icon("mail") Onay e-postasını tekrar gönder</button></form>
+                }
+                @if (r.Status == ReservationStatus.Confirmed)
+                {
+                    <details class="cancel-box">
+                        <summary class="btn btn-danger-ghost btn-block">@Ui.Icon("x") İptal et</summary>
+                        <form method="post" action="/yonetim/rezervasyonlar/@r.Id/iptal" asp-antiforgery="true" class="stack">
+                            <label>Müşteriye iletilecek açıklama <textarea name="reason" rows="3" placeholder="Örn. araç bakıma alındı, size benzer bir araç önerebiliriz."></textarea></label>
+                            <button class="btn btn-danger btn-block" disabled="@demo">İptal et ve müşteriye bildir</button>
+                        </form>
+                    </details>
+                }
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>İç not</h3>
+            <form method="post" action="/yonetim/rezervasyonlar/@r.Id/not" asp-antiforgery="true" class="stack">
+                <textarea name="note" rows="3" placeholder="Sadece ekip görür" disabled="@demo">@r.AdminNote</textarea>
+                <button class="btn btn-sm" disabled="@demo">Kaydet</button>
+            </form>
+        </section>
+    </aside>
+</div>

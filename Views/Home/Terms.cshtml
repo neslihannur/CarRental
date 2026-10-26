@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Kiralama koşulları";
+    var sections = new (string Title, string[] Items)[]
+    {
+        ("Sürücü şartları", [
+            "Sürücünün araç sayfasında belirtilen minimum yaşı (21–30) ve ehliyet süresini (2–8 yıl) karşılaması gerekir.",
+            "Teslimde geçerli sürücü belgesi, T.C. kimlik kartı veya pasaport ve sürücü adına düzenlenmiş kredi kartı istenir.",
+            "Ek sürücü, ek hizmet olarak eklenebilir ve aynı şartları taşımalıdır.",
+        ]),
+        ("Ödeme ve provizyon", [
+            "Online rezervasyonda ödeme alınmaz; toplam tutar araç tesliminde kredi kartıyla tahsil edilir.",
+            "Teslimde araç sınıfına göre provizyon bloke edilir; araç hasarsız iade edildiğinde provizyon aynı gün kaldırılır.",
+            "Fiyatlara KDV, kasko ve zorunlu trafik sigortası dahildir.",
+        ]),
+        ("Süre, gecikme ve iptal", [
+            "Kiralama 24 saatlik dilimler halinde hesaplanır; iadede 1 saate kadar gecikme ek gün sayılmaz.",
+            "7 gün ve üzeri %10, 14 gün ve üzeri %15, 30 gün ve üzeri %20 indirim otomatik uygulanır.",
+            "Rezervasyon, teslim saatine kadar ücretsiz iptal edilebilir.",
+            "Online rezervasyon en fazla 90 gün içindir; daha uzun süreler için kurumsal teklif alınabilir.",
+        ]),
+        ("Yakıt, kilometre ve kullanım", [
+            "Araçlar dolu depo teslim edilir ve dolu depo iade edilmelidir; eksik yakıt piyasa fiyatı + hizmet bedeliyle faturalandırılır.",
+            "Günlük kilometre sınırı araç sayfasında belirtilir; aşan her km için araç sınıfına göre ücret alınır.",
+            "Araçların yurt dışına çıkarılması, yarış ve ticari taşımacılıkta kullanılması yasaktır.",
+            "Trafik cezaları, köprü/otoyol geçişleri (HGS paketi alınmadıysa) kiracıya aittir.",
+        ]),
+        ("Farklı şubede iade", [
+            "Aynı şehirdeki farklı şubeye iade 750 ₺, farklı şehirdeki şubeye iade 2.500 ₺ tek yön ücretine tabidir.",
+        ]),
+        ("Hasar ve kaza", [
+            "Kaza veya hasar durumunda 7/24 yol yardım hattı (0850 000 00 01) aranmalı ve kaza tespit tutanağı düzenlenmelidir.",
+            "Tam Koruma Paketi alınmamışsa hasar muafiyet bedeli kiracıya aittir; muafiyet tutarı araç sınıfına göre değişir.",
+            "Alkollü araç kullanımı ve tutanaksız hasarlarda sigorta kapsamı geçersizdir.",
+        ]),
+    };
+}
+<section class="page-hero page-hero-dark">
+    <div class="container">
+        <p class="eyebrow eyebrow-light">Yardım</p>
+        <h1 class="page-title" data-split>Kiralama koşulları</h1>
+        <p class="page-lead">Kısa, açık ve sürprizsiz. Rezervasyondan önce bilmen gereken her şey.</p>
+    </div>
+</section>
+<section class="section">
+    <div class="container prose-layout">
+        <nav class="toc">
+            @for (var i = 0; i < sections.Length; i++)
+            {
+                <a href="#k@(i + 1)">@sections[i].Title</a>
+            }
+        </nav>
+        <div class="prose">
+            @for (var i = 0; i < sections.Length; i++)
+            {
+                <h2 id="k@(i + 1)">@(i + 1). @sections[i].Title</h2>
+                <ul>
+                    @foreach (var item in sections[i].Items) { <li>@item</li> }
+                </ul>
+            }
+            <p class="muted small">Bu metin bir portföy demo projesi için hazırlanmıştır ve gerçek bir sözleşme değildir.</p>
+        </div>
+    </div>
+</section>

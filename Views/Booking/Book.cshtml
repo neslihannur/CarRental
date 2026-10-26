@@ -1,0 +1,176 @@
+@model BookingPage
+@{
+    var c = Model.Car;
+    var f = Model.Form;
+    var q = Model.Quote;
+    ViewData["Title"] = $"{c.Name} · Rezervasyon";
+    var maxBirth = Clock.Today.AddYears(-c.MinDriverAge).ToString("yyyy-MM-dd");
+}
+
+<section class="checkout-hero">
+    <div class="container">
+        <a href="/arac/@c.Slug?@f.ToTrip().Query" class="back-link">@Ui.Icon("arrow-left") @c.Name</a>
+        <h1 class="page-title">Rezervasyonu tamamla</h1>
+        <ol class="progress-steps">
+            <li class="done"><span>@Ui.Icon("check")</span> Araç</li>
+            <li class="current"><span>2</span> Ek hizmetler</li>
+            <li class="current"><span>3</span> Sürücü</li>
+            <li><span>4</span> Onay</li>
+        </ol>
+    </div>
+</section>
+
+<section class="section checkout">
+    <form asp-antiforgery="true" method="post" action="/rezervasyon/@c.Slug" class="container checkout-layout" data-quote-form data-car="@c.Slug" novalidate>
+        <div class="checkout-main">
+            @if (Model.Error is not null || !ViewData.ModelState.IsValid)
+            {
+                <div class="notice notice-error" role="alert">
+                    @Ui.Icon("alert")
+                    <div>
+                        <strong>Lütfen kontrol edin</strong>
+                        @if (Model.Error is not null) { <span>@Model.Error</span> }
+                        <div asp-validation-summary="All" class="validation-list"></div>
+                    </div>
+                </div>
+            }
+
+            <fieldset class="panel" data-search>
+                <legend><span class="num">1</span> Tarih ve şube</legend>
+                <div class="form-grid">
+                    <label>Alış şubesi
+                        <select name="Sube" data-pickup-branch>
+                            @foreach (var b in Catalog.Branches)
+                            {
+                                <option value="@b.Code" selected="@(b.Code == f.Sube)">@b.Name (@b.City)</option>
+                            }
+                        </select>
+                    </label>
+                    <label>İade şubesi
+                        <select name="DonusSube" data-return-branch>
+                            @foreach (var b in Catalog.Branches)
+                            {
+                                <option value="@b.Code" selected="@(b.Code == f.DonusSube)">@b.Name (@b.City)</option>
+                            }
+                        </select>
+                    </label>
+                    <div class="dt-pair">
+                        <label>Alış tarihi <input type="date" name="Alis" value="@f.Alis?.ToString("yyyy-MM-dd")" data-date="pickup" required></label>
+                        <label>Saat
+                            <select name="AlisSaat" data-time="pickup">
+                                @foreach (var t in Catalog.Times) { <option selected="@(t == f.AlisSaat)">@t</option> }
+                            </select>
+                        </label>
+                    </div>
+                    <div class="dt-pair">
+                        <label>İade tarihi <input type="date" name="Donus" value="@f.Donus?.ToString("yyyy-MM-dd")" data-date="return" required></label>
+                        <label>Saat
+                            <select name="DonusSaat" data-time="return">
+                                @foreach (var t in Catalog.Times) { <option selected="@(t == f.DonusSaat)">@t</option> }
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel">
+                <legend><span class="num">2</span> Ek hizmetler</legend>
+                <div class="extras">
+                    @foreach (var e in Catalog.Extras)
+                    {
+                        <label class="extra">
+                            <input type="checkbox" name="Ek" value="@e.Code" checked="@f.Ek.Contains(e.Code)">
+                            <span class="extra-icon">@Ui.Icon(e.Icon)</span>
+                            <span class="extra-text"><strong>@e.Name</strong><small>@e.Description</small></span>
+                            <span class="extra-price">@Catalog.Money(e.Price)<small>@(e.PerDay ? "/gün" : "tek sefer")</small></span>
+                            <span class="extra-check">@Ui.Icon("check")</span>
+                        </label>
+                    }
+                </div>
+            </fieldset>
+
+            <fieldset class="panel">
+                <legend><span class="num">3</span> Sürücü bilgileri</legend>
+                <div class="form-grid">
+                    <label class="span-2">Ad soyad (ehliyetteki gibi)
+                        <input name="FullName" value="@f.FullName" autocomplete="name" required maxlength="80">
+                    </label>
+                    <label>E-posta
+                        <input name="Email" value="@f.Email" type="email" autocomplete="email" required>
+                        <small class="hint">Onay ve hatırlatma e-postaları buraya gelir.</small>
+                    </label>
+                    <label>Cep telefonu
+                        <input name="Phone" value="@f.Phone" type="tel" autocomplete="tel" placeholder="05xx xxx xx xx" required>
+                    </label>
+                    <label>Doğum tarihi
+                        <input name="BirthDate" type="date" value="@f.BirthDate?.ToString("yyyy-MM-dd")" max="@maxBirth" required data-no-picker>
+                        <small class="hint">Bu araç için en az @c.MinDriverAge yaş.</small>
+                    </label>
+                    <label>Ehliyet alış yılı
+                        <input name="LicenseYear" type="number" inputmode="numeric" min="1950" max="@Clock.Today.Year" value="@f.LicenseYear" required>
+                        <small class="hint">En az @c.MinLicenseYears yıllık ehliyet.</small>
+                    </label>
+                    <label>Uçuş numarası <span class="opt">isteğe bağlı</span>
+                        <input name="FlightNo" value="@f.FlightNo" placeholder="TK2124" maxlength="12">
+                        <small class="hint">Rötar olursa sizi bekleriz.</small>
+                    </label>
+                    <label>Not <span class="opt">isteğe bağlı</span>
+                        <input name="Notes" value="@f.Notes" maxlength="500" placeholder="Örn. bebek koltuğu arkaya">
+                    </label>
+                </div>
+                <div class="hp" aria-hidden="true"><label>Web sitesi <input name="Website" tabindex="-1" autocomplete="off"></label></div>
+            </fieldset>
+
+            <fieldset class="panel">
+                <legend><span class="num">4</span> Onay</legend>
+                <label class="consent">
+                    <input type="checkbox" name="AcceptTerms" value="true" checked="@f.AcceptTerms" required>
+                    <span><a href="/kosullar" target="_blank" class="link">Kiralama koşullarını</a> ve <a href="/gizlilik" target="_blank" class="link">KVKK aydınlatma metnini</a> okudum, kabul ediyorum.</span>
+                </label>
+                <input type="hidden" name="AcceptTerms" value="false">
+                <div class="pay-note">
+                    @Ui.Icon("card")
+                    <p><strong>Şimdi ödeme yok.</strong> Ödeme araç tesliminde kredi kartıyla alınır; teslimde <span data-q="deposit">@Catalog.Money(q.Deposit)</span> provizyon bloke edilir.</p>
+                </div>
+            </fieldset>
+        </div>
+
+        <aside class="summary">
+            <div class="summary-card">
+                <div class="summary-car">
+                    <img src="/images/@c.Image" alt="">
+                    <div>
+                        <span class="muted small">@c.Category · @c.Transmission</span>
+                        <strong>@c.Name</strong>
+                    </div>
+                </div>
+                <div class="summary-trip">
+                    <div>@Ui.Icon("calendar") <span data-q="pickup">@Catalog.DateTimeShort(f.ToTrip().PickupAt)</span></div>
+                    <div>@Ui.Icon("arrow") <span data-q="return">@Catalog.DateTimeShort(f.ToTrip().ReturnAt)</span></div>
+                </div>
+                <dl class="breakdown">
+                    <div><dt>Kiralama (<span data-q="days">@q.Days</span> gün × @Catalog.Money(q.DailyPrice))</dt><dd data-q="baseTotal">@Catalog.Money(q.BaseTotal)</dd></div>
+                    <div data-q-row="discount" @(q.Discount > 0 ? "" : "hidden")><dt>Uzun kiralama indirimi</dt><dd class="good" data-q="discount">−@Catalog.Money(q.Discount)</dd></div>
+                    <div data-q-list="extras">
+                        @foreach (var line in q.Extras)
+                        {
+                            <div><dt>@line.Label</dt><dd>@Catalog.Money(line.Amount)</dd></div>
+                        }
+                    </div>
+                    <div data-q-row="oneWay" @(q.OneWayFee > 0 ? "" : "hidden")><dt>Farklı şubede iade</dt><dd data-q="oneWay">@Catalog.Money(q.OneWayFee)</dd></div>
+                    <div class="total"><dt>Toplam <small>KDV dahil</small></dt><dd data-q="total">@Catalog.Money(q.Total)</dd></div>
+                </dl>
+                <div class="notice notice-warn" data-q="unavailable" @(Model.Error is null ? "hidden" : "")>
+                    @Ui.Icon("alert")<div><strong>Bu tarihlerde dolu.</strong> <span data-q="nextFree"></span></div>
+                </div>
+                <div class="notice notice-error" data-q="error" hidden></div>
+                <button type="submit" class="btn btn-accent btn-block btn-lg" data-q="submit">Rezervasyonu onayla @Ui.Icon("arrow")</button>
+                <ul class="mini-checks">
+                    <li>@Ui.Icon("check") Anında onay e-postası</li>
+                    <li>@Ui.Icon("check") Teslime kadar ücretsiz iptal</li>
+                    <li>@Ui.Icon("lock") Bilgilerin yalnızca kiralama için kullanılır</li>
+                </ul>
+            </div>
+        </aside>
+    </form>
+</section>

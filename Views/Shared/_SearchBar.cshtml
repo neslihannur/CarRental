@@ -1,0 +1,73 @@
+@model Trip
+@{
+    var differentReturn = Model.PickupBranch != Model.ReturnBranch;
+    var compact = ViewData["Compact"] is true;
+}
+<form class="search @(compact ? "search-compact" : "")" action="/filo" method="get" data-search>
+    @if (ViewData["Hidden"] is IDictionary<string, string?> hidden)
+    {
+        foreach (var (k, v) in hidden.Where(h => !string.IsNullOrEmpty(h.Value)))
+        {
+            <input type="hidden" name="@k" value="@v">
+        }
+    }
+    <div class="search-field search-branch">
+        <label for="s-sube">@Ui.Icon("pin") Alış şubesi</label>
+        <select id="s-sube" name="sube" data-pickup-branch>
+            @foreach (var g in Catalog.Branches.GroupBy(b => b.City))
+            {
+                <optgroup label="@g.Key">
+                    @foreach (var b in g)
+                    {
+                        <option value="@b.Code" selected="@(b.Code == Model.PickupBranch)">@b.Name</option>
+                    }
+                </optgroup>
+            }
+        </select>
+        <label class="search-toggle">
+            <input type="checkbox" data-different-return checked="@differentReturn"> Farklı şubede iade
+        </label>
+    </div>
+    <div class="search-field search-branch search-return" data-return-field @(differentReturn ? "" : "hidden")>
+        <label for="s-donusSube">@Ui.Icon("pin") İade şubesi</label>
+        <select id="s-donusSube" name="donusSube" data-return-branch>
+            @foreach (var g in Catalog.Branches.GroupBy(b => b.City))
+            {
+                <optgroup label="@g.Key">
+                    @foreach (var b in g)
+                    {
+                        <option value="@b.Code" selected="@(b.Code == Model.ReturnBranch)">@b.Name</option>
+                    }
+                </optgroup>
+            }
+        </select>
+    </div>
+    <div class="search-field">
+        <label for="s-alis">@Ui.Icon("calendar") Alış</label>
+        <div class="search-dt">
+            <input id="s-alis" type="date" name="alis" value="@Model.PickupAt.ToString("yyyy-MM-dd")" data-date="pickup" required>
+            <select name="alisSaat" aria-label="Alış saati" data-time="pickup">
+                @foreach (var t in Catalog.Times)
+                {
+                    <option selected="@(t == Model.PickupAt.ToString("HH:mm"))">@t</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="search-field">
+        <label for="s-donus">@Ui.Icon("calendar") İade</label>
+        <div class="search-dt">
+            <input id="s-donus" type="date" name="donus" value="@Model.ReturnAt.ToString("yyyy-MM-dd")" data-date="return" required>
+            <select name="donusSaat" aria-label="İade saati" data-time="return">
+                @foreach (var t in Catalog.Times)
+                {
+                    <option selected="@(t == Model.ReturnAt.ToString("HH:mm"))">@t</option>
+                }
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-accent search-submit">
+        @Ui.Icon("search") <span>@(ViewData["SubmitText"] as string ?? "Araç bul")</span>
+    </button>
+    <div class="search-days" data-days-label>@Model.Days gün</div>
+</form>

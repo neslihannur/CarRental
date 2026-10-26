@@ -1,0 +1,30 @@
+@model ContactMessage
+@{
+    ViewData["Title"] = Model.Kind == "kurumsal" ? "Kurumsal teklif talebi" : "Mesaj";
+    var demo = User.IsInRole("demo");
+}
+<a href="/yonetim/mesajlar" class="back">← Mesajlar</a>
+<div class="detail">
+    <div class="detail-main">
+        <section class="card">
+            <h2>@(Model.Subject ?? "Mesaj")</h2>
+            <p class="message-body">@Model.Message</p>
+        </section>
+    </div>
+    <aside class="detail-side">
+        <section class="card">
+            <dl class="kv">
+                <dt>Ad soyad</dt><dd>@(demo ? Mask.Name(Model.Name) : Model.Name)</dd>
+                <dt>E-posta</dt><dd>@(demo ? Mask.Email(Model.Email) : Model.Email)</dd>
+                @if (Model.Phone is not null) { <dt>Telefon</dt><dd>@(demo ? Mask.Phone(Model.Phone) : Model.Phone)</dd> }
+                @if (Model.Company is not null) { <dt>Şirket</dt><dd>@Model.Company</dd> }
+                @if (Model.FleetSize is not null) { <dt>Araç ihtiyacı</dt><dd>@Model.FleetSize</dd> }
+                <dt>Tarih</dt><dd>@Catalog.DateTimeShort(Model.CreatedAt.AddHours(3))</dd>
+            </dl>
+            @if (!demo)
+            {
+                <a href="mailto:@Model.Email?subject=@Uri.EscapeDataString("Re: " + (Model.Subject ?? "GoCar"))" class="btn btn-primary btn-block" style="margin-top:16px">@Ui.Icon("mail") Yanıtla</a>
+            }
+        </section>
+    </aside>
+</div>

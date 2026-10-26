@@ -1,0 +1,83 @@
+@model ContactForm
+@{
+    ViewData["Title"] = "İletişim";
+    ViewData["Description"] = "GoCar ile iletişime geçin: 0850 000 00 00, 7/24 yol yardım ve tüm şube adresleri.";
+    var sent = Context.Request.Query["gonderildi"] == "1";
+}
+
+<section class="page-hero page-hero-dark">
+    <div class="container">
+        <p class="eyebrow eyebrow-light">İletişim</p>
+        <h1 class="page-title" data-split>Konuşalım.</h1>
+        <p class="page-lead">Rezervasyon, fatura ya da iş birliği… Mesai saatlerinde 1 saat içinde dönüyoruz.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container contact-layout">
+        <div class="contact-cards">
+            <a href="tel:08500000000" class="contact-card" data-anim="fade-up">@Ui.Icon("phone")<span>Çağrı merkezi</span><strong>0850 000 00 00</strong><small>Her gün 08:00 – 24:00</small></a>
+            <a href="tel:08500000001" class="contact-card" data-anim="fade-up">@Ui.Icon("headset")<span>7/24 yol yardım</span><strong>0850 000 00 01</strong><small>Kaza, arıza, lastik</small></a>
+            <a href="mailto:merhaba@gocar.example" class="contact-card" data-anim="fade-up">@Ui.Icon("mail")<span>E-posta</span><strong>merhaba@gocar.example</strong><small>1 iş günü içinde yanıt</small></a>
+            <div class="contact-card" data-anim="fade-up">@Ui.Icon("building")<span>Genel merkez</span><strong>Levent, İstanbul</strong><small>Büyükdere Cad. No: 185</small></div>
+        </div>
+
+        <div class="panel form-panel" id="form">
+            @if (sent)
+            {
+                <div class="sent" data-success>
+                    <div class="success-mark"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+                    <h2>Mesajın bize ulaştı</h2>
+                    <p class="muted">E-postana bir kopyasını gönderdik. En kısa sürede dönüş yapacağız.</p>
+                    <a href="/" class="btn btn-dark">Ana sayfaya dön</a>
+                </div>
+            }
+            else
+            {
+                <h2>Bize yaz</h2>
+                <form asp-antiforgery="true" method="post" action="/iletisim" class="form-grid" novalidate>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="notice notice-error span-2">@Ui.Icon("alert")<div asp-validation-summary="All" class="validation-list"></div></div>
+                    }
+                    <label>Ad soyad <input name="Name" value="@Model.Name" required autocomplete="name"></label>
+                    <label>E-posta <input name="Email" type="email" value="@Model.Email" required autocomplete="email"></label>
+                    <label>Telefon <span class="opt">isteğe bağlı</span><input name="Phone" type="tel" value="@Model.Phone" autocomplete="tel"></label>
+                    <label>Konu
+                        <select name="Subject">
+                            @foreach (var s in new[] { "Rezervasyon", "Fatura ve ödeme", "Hasar / kaza", "Öneri ve şikâyet", "Diğer" })
+                            {
+                                <option selected="@(Model.Subject == s)">@s</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="span-2">Mesaj <textarea name="Message" rows="6" required>@Model.Message</textarea></label>
+                    <label class="consent span-2">
+                        <input type="checkbox" name="AcceptPrivacy" value="true" checked="@Model.AcceptPrivacy">
+                        <span><a href="/gizlilik" class="link" target="_blank">Aydınlatma metnini</a> okudum; bilgilerimin bu talep için işlenmesini kabul ediyorum.</span>
+                    </label>
+                    <input type="hidden" name="AcceptPrivacy" value="false">
+                    <div class="hp" aria-hidden="true"><input name="Website" tabindex="-1" autocomplete="off"></div>
+                    <button class="btn btn-accent btn-lg span-2">Gönder @Ui.Icon("arrow")</button>
+                </form>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section branches compact">
+    <div class="container">
+        <h2 class="section-title">Şubelerimiz</h2>
+        <div class="branch-list">
+            @foreach (var b in Catalog.Branches)
+            {
+                <div class="branch">
+                    <span class="branch-city">@b.City</span>
+                    <span class="branch-name">@Ui.Icon(b.IsAirport ? "plane" : "building") @b.Name</span>
+                    <span class="branch-addr">@b.Address</span>
+                    <span class="branch-hours">@Ui.Icon("clock") @b.Hours</span>
+                </div>
+            }
+        </div>
+    </div>
+</section>

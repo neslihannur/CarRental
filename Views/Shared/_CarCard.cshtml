@@ -1,0 +1,49 @@
+@model CarCard
+@{
+    var trip = (Trip)ViewData["Trip"]!;
+    var c = Model.Car;
+    var q = Model.Quote;
+}
+<article class="car-card @(Model.Available ? "" : "is-full")" data-anim="card">
+    <a href="@Ui.CarUrl(c, trip)" class="car-card-media" tabindex="-1" aria-hidden="true">
+        <img src="/images/@c.Image" alt="" loading="lazy">
+        <span class="chip">@c.Category</span>
+        @if (!Model.Available)
+        {
+            <span class="chip chip-dark">Bu tarihlerde dolu</span>
+        }
+        else if (q.DiscountRate > 0)
+        {
+            <span class="chip chip-accent">%@((int)(q.DiscountRate * 100)) indirim</span>
+        }
+    </a>
+    <div class="car-card-body">
+        <div class="car-card-head">
+            <div>
+                <span class="car-brand">@c.Brand</span>
+                <h3><a href="@Ui.CarUrl(c, trip)">@c.Model</a></h3>
+            </div>
+            <span class="car-year">@c.Year</span>
+        </div>
+        <ul class="specs">
+            <li>@Ui.Icon("seat") @c.Seats kişi</li>
+            <li>@Ui.Icon("gear") @c.Transmission</li>
+            <li>@Ui.Icon("fuel") @c.Fuel</li>
+            <li>@Ui.Icon("bolt") @c.Horsepower hp</li>
+        </ul>
+        <div class="car-card-foot">
+            <div class="price">
+                <strong>@Catalog.Money(c.DailyPrice)</strong><span>/gün</span>
+                <small>@q.Days gün · toplam @Catalog.Money(q.BaseTotal - q.Discount)</small>
+            </div>
+            @if (Model.Available)
+            {
+                <a href="@Ui.BookUrl(c, trip)" class="btn btn-dark btn-sm">Kirala @Ui.Icon("arrow")</a>
+            }
+            else
+            {
+                <a href="@Ui.CarUrl(c, trip)" class="btn btn-outline btn-sm">Uygun tarih</a>
+            }
+        </div>
+    </div>
+</article>

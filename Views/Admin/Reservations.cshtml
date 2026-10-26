@@ -1,0 +1,55 @@
+@model List<Reservation>
+@{
+    ViewData["Title"] = "Rezervasyonlar";
+    var durum = ViewData["Durum"] as string;
+    var q = ViewData["Q"] as string;
+    var zaman = ViewData["Zaman"] as string;
+    var sayfa = (int)ViewData["Sayfa"]!;
+    var sayfaSayisi = (int)ViewData["SayfaSayisi"]!;
+    var counts = (Dictionary<ReservationStatus, int>)ViewData["Counts"]!;
+    string Link(string? d = null, string? z = null, int? s = null) =>
+        $"/yonetim/rezervasyonlar?durum={d ?? durum}&zaman={z ?? zaman}&q={Uri.EscapeDataString(q ?? "")}&sayfa={s ?? 1}";
+}
+
+<div class="toolbar">
+    <div class="tabs">
+        <a href="/yonetim/rezervasyonlar?zaman=@zaman&q=@q" class="@(durum is null or "" ? "is-active" : "")">Tümü <small>@counts.Values.Sum()</small></a>
+        @foreach (var s in Enum.GetValues<ReservationStatus>())
+        {
+            <a href="@Link(d: s.ToString())" class="@(durum == s.ToString() ? "is-active" : "")">@Catalog.StatusText(s) <small>@counts.GetValueOrDefault(s)</small></a>
+        }
+    </div>
+    <form class="search-inline" method="get">
+        <input type="hidden" name="durum" value="@durum">
+        <select name="zaman" onchange="this.form.submit()">
+            <option value="">Tüm tarihler</option>
+            <option value="gelecek" selected="@(zaman == "gelecek")">Yaklaşan</option>
+            <option value="gecmis" selected="@(zaman == "gecmis")">Geçmiş</option>
+        </select>
+        <input name="q" value="@q" placeholder="Kod, isim, e-posta, araç…">
+        <button class="btn btn-sm">@Ui.Icon("search")</button>
+    </form>
+</div>
+
+<section class="card">
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>Kod</th><th>Müşteri</th><th>Araç</th><th>Tarih</th><th class="num">Tutar</th><th>Durum</th></tr></thead>
+            <tbody>
+                @foreach (var r in Model) { <partial name="_ResRow" model="r" /> }
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="6" class="empty-row">Sonuç yok.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="pager">
+        <span class="muted">@ViewData["Toplam"] kayıt</span>
+        <div>
+            @if (sayfa > 1) { <a href="@Link(s: sayfa - 1)" class="btn btn-sm">← Önceki</a> }
+            <span>@sayfa / @sayfaSayisi</span>
+            @if (sayfa < sayfaSayisi) { <a href="@Link(s: sayfa + 1)" class="btn btn-sm">Sonraki →</a> }
+        </div>
+    </div>
+</section>

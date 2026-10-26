@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Rezervasyonum";
+    ViewData["Description"] = "Rezervasyon kodun ve e-postanla rezervasyonunu görüntüle, takvime ekle ya da ücretsiz iptal et.";
+    var error = ViewData["Error"] as string;
+}
+
+<section class="page-hero page-hero-dark lookup-hero">
+    <div class="container lookup-layout">
+        <div>
+            <p class="eyebrow eyebrow-light">Rezervasyonum</p>
+            <h1 class="page-title" data-split>Rezervasyonunu yönet.</h1>
+            <p class="page-lead">Onay e-postasındaki kod ve e-posta adresinle ayrıntıları gör, takvimine ekle ya da teslim saatine kadar ücretsiz iptal et.</p>
+        </div>
+        <form asp-antiforgery="true" method="post" action="/rezervasyonum" class="lookup-card">
+            @if (error is not null)
+            {
+                <div class="notice notice-error">@Ui.Icon("alert")<div>@error</div></div>
+            }
+            <label>Rezervasyon kodu
+                <input name="kod" value="@ViewData["Kod"]" placeholder="GC-ABC123" required autocapitalize="characters" autocomplete="off">
+            </label>
+            <label>E-posta adresi
+                <input name="eposta" type="email" value="@ViewData["Eposta"]" placeholder="ornek@eposta.com" required autocomplete="email">
+            </label>
+            <button class="btn btn-accent btn-block btn-lg">Rezervasyonu bul @Ui.Icon("arrow")</button>
+            <p class="muted small">Kodunu bulamıyor musun? <a href="/iletisim" class="link">Bize yaz</a>.</p>
+        </form>
+    </div>
+</section>

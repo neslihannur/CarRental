@@ -1,0 +1,193 @@
+@model CarPage
+@{
+    var c = Model.Car;
+    var q = Model.Quote;
+    ViewData["Title"] = $"{c.Name} kirala";
+    ViewData["Description"] = $"{c.Name} kiralama: {c.Tagline} Günlük {Catalog.Money(c.DailyPrice)}'den başlayan fiyatlar, kasko dahil.";
+    ViewData["Trip"] = Model.Trip;
+    var full = Model.FullDays.ToHashSet();
+    var today = Clock.Today;
+    var months = new[] { new DateOnly(today.Year, today.Month, 1), new DateOnly(today.Year, today.Month, 1).AddMonths(1) };
+    var tripStart = DateOnly.FromDateTime(Model.Trip.PickupAt);
+    var tripEnd = DateOnly.FromDateTime(Model.Trip.ReturnAt);
+}
+
+<section class="car-hero">
+    <div class="container">
+        <nav class="crumbs" aria-label="Konum">
+            <a href="/">Ana sayfa</a> <span>/</span> <a href="/filo?@Model.Trip.Query">Filo</a> <span>/</span> <a href="/filo?@Model.Trip.Query&tip=@c.Category">@c.Category</a>
+        </nav>
+        <div class="car-hero-grid">
+            <div class="car-hero-text">
+                <span class="car-brand">@c.Brand · @c.Year</span>
+                <h1 class="car-title" data-split>@c.Model</h1>
+                <p class="car-tagline">@c.Tagline</p>
+                <ul class="spec-tiles">
+                    <li>@Ui.Icon("bolt")<strong>@c.Horsepower</strong><span>beygir</span></li>
+                    <li>@Ui.Icon("gear")<strong>@c.Transmission</strong><span>vites</span></li>
+                    <li>@Ui.Icon("fuel")<strong>@c.Fuel</strong><span>yakıt</span></li>
+                    <li>@Ui.Icon("seat")<strong>@c.Seats</strong><span>koltuk</span></li>
+                    <li>@Ui.Icon("door")<strong>@c.Doors</strong><span>kapı</span></li>
+                    <li>@Ui.Icon("bag")<strong>@c.Luggage</strong><span>büyük bavul</span></li>
+                </ul>
+            </div>
+            <div class="car-hero-media" data-clip-reveal>
+                <img src="/images/@c.Image" alt="@c.Name" data-parallax>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section car-body">
+    <div class="container car-layout">
+        <div class="car-main">
+            <div class="block" data-anim="fade-up">
+                <h2>Bu araç hakkında</h2>
+                <p class="lead">@c.Description</p>
+                <ul class="checks">
+                    @foreach (var f in c.Features)
+                    {
+                        <li>@Ui.Icon("check") @f</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="block" data-anim="fade-up">
+                <h2>Kiralama şartları</h2>
+                <div class="req-grid">
+                    <div class="req">@Ui.Icon("users")<span>Minimum sürücü yaşı</span><strong>@c.MinDriverAge</strong></div>
+                    <div class="req">@Ui.Icon("key")<span>Ehliyet süresi</span><strong>@c.MinLicenseYears yıl+</strong></div>
+                    <div class="req">@Ui.Icon("card")<span>Provizyon (teslimde)</span><strong>@Catalog.Money(c.Deposit)</strong></div>
+                    <div class="req">@Ui.Icon("road")<span>Günlük km sınırı</span><strong>@(c.DailyKmLimit > 0 ? $"{c.DailyKmLimit} km" : "Sınırsız")</strong></div>
+                    <div class="req">@Ui.Icon("fuel")<span>Yakıt politikası</span><strong>Dolu / dolu</strong></div>
+                    <div class="req">@Ui.Icon("shield")<span>Kasko</span><strong>Dahil</strong></div>
+                </div>
+            </div>
+
+            <div class="block" data-anim="fade-up" id="musaitlik">
+                <div class="block-head">
+                    <h2>Müsaitlik</h2>
+                    <div class="legend"><span class="lg lg-free"></span> Müsait <span class="lg lg-full"></span> Dolu <span class="lg lg-sel"></span> Seçimin</div>
+                </div>
+                <div class="calendars">
+                    @foreach (var m in months)
+                    {
+                        var offset = ((int)m.DayOfWeek + 6) % 7;
+                        <div class="cal">
+                            <h3>@m.ToString("MMMM yyyy", Catalog.Tr)</h3>
+                            <div class="cal-grid">
+                                @foreach (var d in new[] { "Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz" })
+                                {
+                                    <span class="cal-dow">@d</span>
+                                }
+                                @for (var i = 0; i < offset; i++)
+                                {
+                                    <span></span>
+                                }
+                                @for (var day = m; day.Month == m.Month; day = day.AddDays(1))
+                                {
+                                    var cls = day < today ? "past" : full.Contains(day) ? "full" : "free";
+                                    if (day >= tripStart && day <= tripEnd) cls += " sel";
+                                    <span class="cal-day @cls" title="@(full.Contains(day) ? "Dolu" : "")">@day.Day</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <p class="muted small">Aynı modelden filomuzda @c.Units araç var; takvimde tüm araçların dolu olduğu günler işaretlenir.</p>
+            </div>
+        </div>
+
+        <aside class="book-card" data-quote-form data-car="@c.Slug">
+            <div class="book-card-head">
+                <div>
+                    <span class="muted small">Günlük</span>
+                    <div class="book-price"><strong>@Catalog.Money(c.DailyPrice)</strong></div>
+                </div>
+                <span class="avail @(Model.Available ? "is-ok" : "is-full")" data-q="availability">@(Model.Available ? "Müsait" : "Dolu")</span>
+            </div>
+            <form action="/rezervasyon/@c.Slug" method="get" class="book-form" data-search>
+                <label>Alış şubesi
+                    <select name="sube" data-pickup-branch>
+                        @foreach (var b in Catalog.Branches)
+                        {
+                            <option value="@b.Code" selected="@(b.Code == Model.Trip.PickupBranch)">@b.Name</option>
+                        }
+                    </select>
+                </label>
+                <label>İade şubesi
+                    <select name="donusSube" data-return-branch>
+                        @foreach (var b in Catalog.Branches)
+                        {
+                            <option value="@b.Code" selected="@(b.Code == Model.Trip.ReturnBranch)">@b.Name</option>
+                        }
+                    </select>
+                </label>
+                <div class="two">
+                    <label>Alış
+                        <input type="date" name="alis" value="@Model.Trip.PickupAt.ToString("yyyy-MM-dd")" data-date="pickup" required>
+                    </label>
+                    <label>Saat
+                        <select name="alisSaat" data-time="pickup">
+                            @foreach (var t in Catalog.Times)
+                            {
+                                <option selected="@(t == Model.Trip.PickupAt.ToString("HH:mm"))">@t</option>
+                            }
+                        </select>
+                    </label>
+                    <label>İade
+                        <input type="date" name="donus" value="@Model.Trip.ReturnAt.ToString("yyyy-MM-dd")" data-date="return" required>
+                    </label>
+                    <label>Saat
+                        <select name="donusSaat" data-time="return">
+                            @foreach (var t in Catalog.Times)
+                            {
+                                <option selected="@(t == Model.Trip.ReturnAt.ToString("HH:mm"))">@t</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+
+                <dl class="breakdown" data-q="breakdown">
+                    <div><dt>Kiralama (<span data-q="days">@q.Days</span> gün)</dt><dd data-q="baseTotal">@Catalog.Money(q.BaseTotal)</dd></div>
+                    <div data-q-row="discount" @(q.Discount > 0 ? "" : "hidden")><dt>Uzun kiralama indirimi</dt><dd class="good" data-q="discount">−@Catalog.Money(q.Discount)</dd></div>
+                    <div data-q-row="oneWay" @(q.OneWayFee > 0 ? "" : "hidden")><dt>Farklı şubede iade</dt><dd data-q="oneWay">@Catalog.Money(q.OneWayFee)</dd></div>
+                    <div class="total"><dt>Toplam <small>KDV dahil</small></dt><dd data-q="total">@Catalog.Money(q.Total)</dd></div>
+                </dl>
+
+                <div class="notice notice-warn" data-q="unavailable" @(Model.Available ? "hidden" : "")>
+                    @Ui.Icon("alert")
+                    <div>
+                        <strong>Bu tarihlerde dolu.</strong>
+                        <span data-q="nextFree">@if (Model.NextFree is { } nf) { <text>En yakın uygun başlangıç: <a href="/arac/@c.Slug?@(new Trip(Model.Trip.PickupBranch, Model.Trip.ReturnBranch, nf, nf + (Model.Trip.ReturnAt - Model.Trip.PickupAt)).Query)#musaitlik">@Catalog.DateTimeShort(nf)</a></text> }</span>
+                    </div>
+                </div>
+                <div class="notice notice-error" data-q="error" hidden></div>
+
+                <button type="submit" class="btn btn-accent btn-block btn-lg" data-q="submit" disabled="@(!Model.Available)">Devam et @Ui.Icon("arrow")</button>
+                <ul class="mini-checks">
+                    <li>@Ui.Icon("check") Ön ödeme yok, ödeme teslimde</li>
+                    <li>@Ui.Icon("check") Teslime kadar ücretsiz iptal</li>
+                </ul>
+            </form>
+        </aside>
+    </div>
+</section>
+
+@if (Model.Similar.Count > 0)
+{
+    <section class="section similar">
+        <div class="container">
+            <div class="section-head split">
+                <h2 class="section-title" data-anim="fade-up">Benzer <em>araçlar</em></h2>
+                <a href="/filo?@Model.Trip.Query" class="btn btn-outline">Tüm filo @Ui.Icon("arrow")</a>
+            </div>
+            <div class="car-grid">
+                @foreach (var card in Model.Similar)
+                {
+                    <partial name="_CarCard" model="card" view-data="ViewData" />
+                }
+            </div>
+        </div>
+    </section>
+}

@@ -1,0 +1,67 @@
+@using System.Security.Claims
+@{
+    var demo = User.IsInRole("demo");
+    var path = Context.Request.Path.Value ?? "";
+    string Active(string p, bool exact = false) => (exact ? path == p : path.StartsWith(p)) ? "is-active" : "";
+    var flash = TempData["Flash"] as string;
+}
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>@ViewData["Title"] · GoCar Yönetim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true">
+</head>
+<body>
+    <partial name="_Icons" />
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="adm">
+            <aside class="adm-side">
+                <a href="/yonetim" class="adm-logo">Go<span>Car</span> <small>Yönetim</small></a>
+                <nav>
+                    <a href="/yonetim" class="@Active("/yonetim", true)">@Ui.Icon("grid") Pano</a>
+                    <a href="/yonetim/rezervasyonlar" class="@Active("/yonetim/rezervasyonlar")">@Ui.Icon("list") Rezervasyonlar</a>
+                    <a href="/yonetim/filo" class="@Active("/yonetim/filo")">@Ui.Icon("car") Filo</a>
+                    <a href="/yonetim/mesajlar" class="@Active("/yonetim/mesajlar")">@Ui.Icon("inbox") Mesajlar</a>
+                    <a href="/yonetim/epostalar" class="@Active("/yonetim/epostalar")">@Ui.Icon("mail") E-postalar</a>
+                    @if (!demo)
+                    {
+                        <a href="/yonetim/sifre" class="@Active("/yonetim/sifre")">@Ui.Icon("lock") Şifre</a>
+                    }
+                </nav>
+                <div class="adm-side-foot">
+                    <a href="/" target="_blank">@Ui.Icon("external") Siteyi aç</a>
+                    <form method="post" action="/yonetim/cikis" asp-antiforgery="true">
+                        <button>@Ui.Icon("logout") Çıkış</button>
+                    </form>
+                </div>
+            </aside>
+            <div class="adm-main">
+                @if (demo)
+                {
+                    <div class="demo-bar">@Ui.Icon("info") <span><strong>Demo modu:</strong> salt okunur; gerçek ziyaretçi bilgileri maskelenir.</span></div>
+                }
+                <header class="adm-top">
+                    <h1>@ViewData["Title"]</h1>
+                    @RenderSection("Actions", required: false)
+                </header>
+                @if (flash is not null)
+                {
+                    <div class="flash">@Ui.Icon("check") @flash</div>
+                }
+                @RenderBody()
+            </div>
+        </div>
+    }
+    else
+    {
+        @RenderBody()
+    }
+</body>
+</html>

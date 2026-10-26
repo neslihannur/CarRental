@@ -1,0 +1,107 @@
+@model ContactForm
+@{
+    ViewData["Title"] = "Kurumsal kiralama";
+    ViewData["Description"] = "Şirketler için uzun dönem araç kiralama: bakım, lastik ve sigorta dahil sabit aylık fiyat. 1 iş gününde teklif.";
+    ViewData["DarkHeader"] = true;
+    var sent = Context.Request.Query["gonderildi"] == "1";
+}
+
+<section class="corp-hero">
+    <div class="corp-hero-media" aria-hidden="true"><img src="/images/item-large5.jpg" alt="" data-hero-img></div>
+    <div class="container corp-hero-content">
+        <p class="eyebrow eyebrow-light" data-hero-in>Kurumsal · Uzun dönem</p>
+        <h1 class="hero-title" data-split>Filonu büyüt, <em>yükünü</em> bize bırak.</h1>
+        <p class="hero-lead" data-hero-in>Bakım, lastik, sigorta ve yol yardım dahil sabit aylık fiyat. Araç değişimi, ek araç ya da iade… tek bir müşteri temsilcisiyle.</p>
+        <a href="#form" class="btn btn-accent btn-lg magnetic" data-hero-in>Teklif al @Ui.Icon("arrow")</a>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="plans">
+            @foreach (var (name, price, desc, items, featured) in new[] {
+                ("Esnek", "28.900", "3–11 ay, tek araç", new[] { "Bakım ve lastik dahil", "Aylık 2.500 km", "İstediğin ay iade" }, false),
+                ("Kurumsal", "24.500", "12–36 ay, 5+ araç", new[] { "Bakım, lastik, kasko dahil", "Aylık 3.000 km", "İkame araç garantisi", "Özel müşteri temsilcisi" }, true),
+                ("Premium", "41.500", "12+ ay, yönetici araçları", new[] { "BMW 5 / Mercedes E sınıfı", "Kapıya teslim ve alım", "Sınırsız km seçeneği" }, false) })
+            {
+                <div class="plan @(featured ? "is-featured" : "")" data-anim="card">
+                    @if (featured) { <span class="plan-badge">En çok tercih edilen</span> }
+                    <h3>@name</h3>
+                    <p class="muted">@desc</p>
+                    <div class="plan-price"><span>araç başı</span><strong>@price ₺</strong><span>/ay'dan</span></div>
+                    <ul class="checks">
+                        @foreach (var i in items) { <li>@Ui.Icon("check") @i</li> }
+                    </ul>
+                    <a href="#form" class="btn @(featured ? "btn-accent" : "btn-outline") btn-block">Teklif iste</a>
+                </div>
+            }
+        </div>
+        <p class="muted small center">Fiyatlar KDV hariç ve örnek niteliğindedir; kesin fiyat araç ve süreye göre teklifte belirlenir.</p>
+    </div>
+</section>
+
+<section class="section steps-section">
+    <div class="container corp-why">
+        @foreach (var (icon, t, d) in new[] {
+            ("card", "Tek fatura", "Tüm filo için aylık tek fatura, gider yönetimi kolay."),
+            ("shield", "Sürpriz yok", "Bakım, lastik ve sigorta sabit fiyata dahil."),
+            ("car", "İkame araç", "Arıza ya da bakımda aynı gün ikame araç."),
+            ("headset", "Tek temsilci", "Tüm talepleriniz için size özel bir temsilci.") })
+        {
+            <div class="feature" data-anim="fade-up">
+                <span class="feature-icon">@Ui.Icon(icon)</span>
+                <div><h3>@t</h3><p>@d</p></div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="section" id="form">
+    <div class="container corp-form-layout">
+        <div>
+            <p class="eyebrow">Teklif formu</p>
+            <h2 class="section-title">1 iş gününde <em>teklifin</em> hazır.</h2>
+            <p class="muted">Formu doldur, kurumsal satış ekibimiz ihtiyacına göre araç ve fiyat seçeneklerini e-postana göndersin.</p>
+        </div>
+        <div class="panel form-panel">
+            @if (sent)
+            {
+                <div class="sent" data-success>
+                    <div class="success-mark"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+                    <h2>Talebin alındı</h2>
+                    <p class="muted">E-postana bir onay gönderdik. Teklifin en geç 1 iş günü içinde hazır olacak.</p>
+                </div>
+            }
+            else
+            {
+                <form asp-antiforgery="true" method="post" action="/kurumsal" class="form-grid" novalidate>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="notice notice-error span-2">@Ui.Icon("alert")<div asp-validation-summary="All" class="validation-list"></div></div>
+                    }
+                    <label>Ad soyad <input name="Name" value="@Model.Name" required autocomplete="name"></label>
+                    <label>Şirket <input name="Company" value="@Model.Company" required autocomplete="organization"></label>
+                    <label>E-posta <input name="Email" type="email" value="@Model.Email" required autocomplete="email"></label>
+                    <label>Telefon <input name="Phone" type="tel" value="@Model.Phone" autocomplete="tel"></label>
+                    <label class="span-2">Araç ihtiyacı
+                        <select name="FleetSize">
+                            @foreach (var s in new[] { "1–4 araç", "5–19 araç", "20–49 araç", "50+ araç" })
+                            {
+                                <option selected="@(Model.FleetSize == s)">@s</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="span-2">İhtiyacınızı kısaca anlatın <textarea name="Message" rows="5" required placeholder="Örn. satış ekibimiz için 12 ay, 8 adet dizel otomatik sedan">@Model.Message</textarea></label>
+                    <label class="consent span-2">
+                        <input type="checkbox" name="AcceptPrivacy" value="true" checked="@Model.AcceptPrivacy">
+                        <span><a href="/gizlilik" class="link" target="_blank">Aydınlatma metnini</a> okudum; bilgilerimin teklif için işlenmesini kabul ediyorum.</span>
+                    </label>
+                    <input type="hidden" name="AcceptPrivacy" value="false">
+                    <input type="hidden" name="Subject" value="Kurumsal teklif">
+                    <div class="hp" aria-hidden="true"><input name="Website" tabindex="-1" autocomplete="off"></div>
+                    <button class="btn btn-accent btn-lg span-2">Teklif iste @Ui.Icon("arrow")</button>
+                </form>
+            }
+        </div>
+    </div>
+</section>

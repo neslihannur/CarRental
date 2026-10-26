@@ -1,0 +1,31 @@
+@model List<Car>
+@{
+    ViewData["Title"] = "Filo";
+    var busy = (Dictionary<int, int>)ViewData["Busy"]!;
+    var upcoming = (Dictionary<int, int>)ViewData["Upcoming"]!;
+}
+<section class="card">
+    <div class="table-wrap">
+        <table class="table fleet-table">
+            <thead><tr><th>Araç</th><th>Kategori</th><th class="num">Günlük</th><th class="num">Adet</th><th>Şu an</th><th class="num">Yaklaşan</th><th>Yayında</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model)
+                {
+                    var b = busy.GetValueOrDefault(c.Id);
+                    <tr onclick="location.href='/yonetim/filo/@c.Id'">
+                        <td><div class="car-cell"><img src="/images/@c.Image" alt=""><div><strong>@c.Name</strong><small>@c.Year · @c.Horsepower hp · @c.Transmission</small></div></div></td>
+                        <td>@c.Category</td>
+                        <td class="num">@Catalog.Money(c.DailyPrice)</td>
+                        <td class="num">@c.Units</td>
+                        <td>
+                            <div class="meter sm"><i style="width:@(c.Units == 0 ? 0 : Math.Min(100, b * 100 / c.Units))%"></i></div>
+                            <small>@b / @c.Units kirada</small>
+                        </td>
+                        <td class="num">@upcoming.GetValueOrDefault(c.Id)</td>
+                        <td>@if (c.IsActive) { <span class="status st-confirmed">Yayında</span> } else { <span class="status st-cancelled">Kapalı</span> }</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

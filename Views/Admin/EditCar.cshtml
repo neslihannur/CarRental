@@ -1,0 +1,35 @@
+@model Car
+@{
+    ViewData["Title"] = Model.Name;
+    var demo = User.IsInRole("demo");
+}
+<a href="/yonetim/filo" class="back">← Filo</a>
+<div class="detail">
+    <div class="detail-main">
+        <section class="card">
+            @if (ViewData["Error"] is string err) { <div class="alert alert-bad">@err</div> }
+            <form method="post" action="/yonetim/filo/@Model.Id" asp-antiforgery="true" class="form-cols">
+                <fieldset disabled="@demo" class="form-cols">
+                    <label>Günlük fiyat (₺) <input name="dailyPrice" type="number" step="50" min="100" value="@((int)Model.DailyPrice)" required></label>
+                    <label>Provizyon (₺) <input name="deposit" type="number" step="500" min="0" value="@((int)Model.Deposit)" required></label>
+                    <label>Filodaki adet <input name="units" type="number" min="0" max="50" value="@Model.Units" required></label>
+                    <label>Günlük km sınırı (0 = sınırsız) <input name="dailyKmLimit" type="number" min="0" value="@Model.DailyKmLimit"></label>
+                    <label>Minimum sürücü yaşı <input name="minDriverAge" type="number" min="18" max="40" value="@Model.MinDriverAge"></label>
+                    <label>Minimum ehliyet yılı <input name="minLicenseYears" type="number" min="1" max="15" value="@Model.MinLicenseYears"></label>
+                    <label class="full">Kısa slogan <input name="tagline" value="@Model.Tagline" maxlength="120"></label>
+                    <label class="full">Açıklama <textarea name="description" rows="4">@Model.Description</textarea></label>
+                    <label class="full">Özellikler (her satıra bir tane) <textarea name="features" rows="6">@string.Join("\n", Model.Features)</textarea></label>
+                    <label class="check full"><input type="checkbox" name="isActive" value="true" checked="@Model.IsActive"> Sitede yayında</label>
+                    <input type="hidden" name="isActive" value="false">
+                    <div class="full"><button class="btn btn-primary">Kaydet</button></div>
+                </fieldset>
+            </form>
+        </section>
+    </div>
+    <aside class="detail-side">
+        <section class="card">
+            <img src="/images/@Model.Image" alt="" class="rounded">
+            <p class="muted small" style="margin-top:12px">Sitede: <a href="/arac/@Model.Slug" target="_blank" class="link">/arac/@Model.Slug</a></p>
+        </section>
+    </aside>
+</div>

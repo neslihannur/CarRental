@@ -1,0 +1,13 @@
+@model Reservation
+@{
+    var demo = User.IsInRole("demo");
+    var mask = demo && !Model.IsDemo;
+}
+<tr onclick="location.href='/yonetim/rezervasyonlar/@Model.Id'">
+    <td><a href="/yonetim/rezervasyonlar/@Model.Id" class="code">@Model.Code</a>@if (!Model.IsDemo) { <span class="badge-web" title="Siteden gelen gerçek rezervasyon">web</span> }</td>
+    <td><strong>@(mask ? Mask.Name(Model.FullName) : Model.FullName)</strong><small>@(mask ? Mask.Email(Model.Email) : Model.Email)</small></td>
+    <td>@Model.Car.Name<small>@Ui.BranchName(Model.PickupBranch)</small></td>
+    <td>@Catalog.DateTimeShort(Model.PickupAt)<small>→ @Catalog.DateTimeShort(Model.ReturnAt)</small></td>
+    <td class="num">@Catalog.Money(Model.Total)<small>@Model.Days gün</small></td>
+    <td><span class="status @Ui.StatusClass(Model.Status)">@Catalog.StatusText(Model.Status)</span></td>
+</tr>

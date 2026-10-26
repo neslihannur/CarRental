@@ -1,88 +1,95 @@
+using System.Text;
+using CarRental.Data;
 using CarRental.Models;
+using CarRental.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
-namespace CarRental.Controllers
+namespace CarRental.Controllers;
+
+public class HomeController(AppDb db, Availability availability, Mailer mailer, IConfiguration config) : Controller
 {
-    public class HomeController : Controller
+    [HttpGet("/")]
+    public async Task<IActionResult> Index()
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        var trip = Trip.Default();
+        var cars = await db.Cars.Where(c => c.IsActive).OrderBy(c => c.SortOrder).ToListAsync();
+        var full = await availability.FullCarIdsAsync(trip);
+        return View(new HomePage
         {
-            _logger = logger;
-        }
-
-        [HttpGet("/")]
-        public IActionResult Index(string? tip, string? konum, DateOnly? alis, DateOnly? donus)
-        {
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var pickup = alis is { } a && a >= today ? a : today.AddDays(1);
-            var ret = donus is { } d && d > pickup ? d : pickup.AddDays(3);
-
-            var cars = Fleet.Cars.AsEnumerable();
-            if (!string.IsNullOrEmpty(tip) && Fleet.Categories.Contains(tip))
-                cars = cars.Where(c => c.Category == tip);
-
-            return View(new HomeViewModel
-            {
-                Cars = cars.ToList(),
-                Category = tip,
-                Location = konum,
-                PickupDate = pickup,
-                ReturnDate = ret,
-                Filtered = tip is not null || alis is not null,
-            });
-        }
-
-        [HttpPost("/rezervasyon")]
-        [ValidateAntiForgeryToken]
-        public IActionResult Reserve(ReservationViewModel model)
-        {
-            var car = Fleet.Find(model.CarId);
-            var today = DateOnly.FromDateTime(DateTime.Today);
-
-            if (!string.IsNullOrEmpty(model.Website))
-                return Redirect("/");
-            if (car is null)
-                ModelState.AddModelError(nameof(model.CarId), "Araç bulunamadı.");
-            if (model.PickupDate < today)
-                ModelState.AddModelError(nameof(model.PickupDate), "Alış tarihi geçmişte olamaz.");
-            if (model.ReturnDate <= model.PickupDate)
-                ModelState.AddModelError(nameof(model.ReturnDate), "Dönüş tarihi alıştan sonra olmalı.");
-
-            if (!ModelState.IsValid || car is null)
-            {
-                TempData["ReservationError"] = string.Join(" ", ModelState.Values
-                    .SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct());
-                return Redirect("/#filo");
-            }
-
-            var days = model.ReturnDate!.Value.DayNumber - model.PickupDate!.Value.DayNumber;
-            var code = "GC" + Random.Shared.Next(100000, 999999);
-            _logger.LogInformation("Rezervasyon {Code}: {Car}, {Days} gün", code, car.Model, days);
-
-            TempData["ReservationCode"] = code;
-            TempData["ReservationCar"] = $"{car.Brand} {car.Model}";
-            TempData["ReservationSummary"] =
-                $"{model.PickupLocation} · {model.PickupDate:dd.MM.yyyy} – {model.ReturnDate:dd.MM.yyyy} · {days} gün";
-            TempData["ReservationTotal"] = (car.DailyPrice * days).ToString("N0", Tr) + " ₺";
-            TempData["ReservationName"] = model.FullName;
-            return Redirect("/#rezervasyon");
-        }
-
-        [HttpGet("/gizlilik")]
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-        static readonly System.Globalization.CultureInfo Tr = new("tr-TR");
+            Trip = trip,
+            Featured = cars.Select(c => new CarCard(c, Pricing.Calculate(c, trip, []), !full.Contains(c.Id))).ToList(),
+            Vehicles = cars.Sum(c => c.Units),
+            Rentals = await db.Reservations.CountAsync(r => r.Status == ReservationStatus.Completed),
+        });
     }
+
+    [HttpGet("/kosullar")]
+    public IActionResult Terms() => View();
+
+    [HttpGet("/gizlilik")]
+    public IActionResult Privacy() => View();
+
+    [HttpGet("/iletisim")]
+    public IActionResult Contact() => View(new ContactForm());
+
+    [HttpPost("/iletisim"), EnableRateLimiting("contact")]
+    public Task<IActionResult> Contact(ContactForm form) => SaveMessageAsync(form, "iletisim", "Contact");
+
+    [HttpGet("/kurumsal")]
+    public IActionResult Corporate() => View(new ContactForm());
+
+    [HttpPost("/kurumsal"), EnableRateLimiting("contact")]
+    public Task<IActionResult> Corporate(ContactForm form) => SaveMessageAsync(form, "kurumsal", "Corporate");
+
+    async Task<IActionResult> SaveMessageAsync(ContactForm form, string kind, string view)
+    {
+        if (!string.IsNullOrEmpty(form.Website)) return Redirect($"/{kind}?gonderildi=1");
+        if (kind == "kurumsal" && string.IsNullOrWhiteSpace(form.Company))
+            ModelState.AddModelError(nameof(form.Company), "Şirket adını yazın.");
+        if (!ModelState.IsValid) return View(view, form);
+
+        var m = new ContactMessage
+        {
+            Kind = kind,
+            Name = form.Name.Trim(),
+            Email = form.Email.Trim().ToLowerInvariant(),
+            Phone = form.Phone?.Trim(),
+            Company = form.Company?.Trim(),
+            FleetSize = form.FleetSize,
+            Subject = form.Subject?.Trim(),
+            Message = form.Message.Trim(),
+            CreatedAt = DateTime.UtcNow,
+        };
+        db.ContactMessages.Add(m);
+        await db.SaveChangesAsync();
+        mailer.ContactReceived(m);
+        await db.SaveChangesAsync();
+        return Redirect($"/{kind}?gonderildi=1#form");
+    }
+
+    [HttpGet("/hata")]
+    public IActionResult Error(int? kod)
+    {
+        Response.StatusCode = kod ?? 500;
+        return View(kod ?? 500);
+    }
+
+    [HttpGet("/robots.txt")]
+    public IActionResult Robots() =>
+        Content($"User-agent: *\nDisallow: /yonetim\nDisallow: /rezervasyonum/\nSitemap: {BaseUrl}/sitemap.xml\n", "text/plain");
+
+    [HttpGet("/sitemap.xml")]
+    public async Task<IActionResult> Sitemap()
+    {
+        var urls = new List<string> { "/", "/filo", "/kurumsal", "/iletisim", "/kosullar", "/gizlilik", "/rezervasyonum" };
+        urls.AddRange(await db.Cars.Where(c => c.IsActive).OrderBy(c => c.SortOrder).Select(c => "/arac/" + c.Slug).ToListAsync());
+        var sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        foreach (var u in urls) sb.Append($"  <url><loc>{BaseUrl}{u}</loc></url>\n");
+        sb.Append("</urlset>\n");
+        return Content(sb.ToString(), "application/xml");
+    }
+
+    string BaseUrl => (config["Site:BaseUrl"] ?? "").TrimEnd('/');
 }

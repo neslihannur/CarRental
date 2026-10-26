@@ -1,0 +1,163 @@
+@model Reservation
+@{
+    var r = Model;
+    var c = r.Car;
+    var isNew = ViewData["New"] is true;
+    ViewData["Title"] = $"Rezervasyon {r.Code}";
+    var pickup = Catalog.FindBranch(r.PickupBranch);
+    var ret = Catalog.FindBranch(r.ReturnBranch);
+    var canCancel = Reservations.CanCustomerCancel(r);
+    var flash = TempData["Flash"] as string;
+    var self = $"/rezervasyonum/{r.Code}?t={r.AccessToken}";
+}
+@section Head { <meta name="robots" content="noindex"> }
+
+<section class="manage-hero @(isNew ? "is-new" : "")">
+    <div class="container">
+        @if (isNew)
+        {
+            <div class="success-mark" data-success>
+                <svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg>
+            </div>
+            <p class="eyebrow">Rezervasyon onaylandı</p>
+            <h1 class="page-title">Harika seçim! @c.Name seni bekliyor.</h1>
+            <p class="page-lead">Onay e-postası <strong>@r.Email</strong> adresine gönderildi. Rezervasyon kodunu not almayı unutma.</p>
+        }
+        else
+        {
+            <a href="/rezervasyonum" class="back-link">@Ui.Icon("arrow-left") Rezervasyonum</a>
+            <h1 class="page-title">Rezervasyon ayrıntıları</h1>
+        }
+        <div class="code-row">
+            <div class="code-box"><span>Rezervasyon kodu</span><strong>@r.Code</strong></div>
+            <span class="status @Ui.StatusClass(r.Status)">@Catalog.StatusText(r.Status)</span>
+        </div>
+    </div>
+</section>
+
+<section class="section manage">
+    <div class="container manage-layout">
+        <div class="manage-main">
+            @if (flash is not null)
+            {
+                <div class="notice notice-ok">@Ui.Icon("check")<div>@flash</div></div>
+            }
+
+            <div class="panel trip-panel">
+                <div class="trip-car">
+                    <img src="/images/@c.Image" alt="@c.Name">
+                    <div>
+                        <span class="muted small">@c.Category · @c.Transmission · @c.Fuel</span>
+                        <h2>@c.Name</h2>
+                        <a href="/arac/@c.Slug" class="link small">Araç sayfası</a>
+                    </div>
+                </div>
+                <div class="trip-legs">
+                    <div class="leg">
+                        <span class="leg-label">Teslim alış</span>
+                        <strong>@Catalog.Date(r.PickupAt)</strong>
+                        <span class="leg-time">@r.PickupAt.ToString("HH:mm")</span>
+                        <span class="muted small">@pickup?.Name · @pickup?.Address</span>
+                    </div>
+                    <div class="leg-arrow">@Ui.Icon("arrow")<span>@r.Days gün</span></div>
+                    <div class="leg">
+                        <span class="leg-label">İade</span>
+                        <strong>@Catalog.Date(r.ReturnAt)</strong>
+                        <span class="leg-time">@r.ReturnAt.ToString("HH:mm")</span>
+                        <span class="muted small">@ret?.Name · @ret?.Address</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Durum geçmişi</h3>
+                <ol class="timeline">
+                    @foreach (var e in r.Events.OrderBy(e => e.At).ThenBy(e => e.Id))
+                    {
+                        <li>
+                            <span class="tl-dot"></span>
+                            <div>
+                                <strong>@e.Title</strong>
+                                <span class="muted small">@Catalog.DateTimeShort(e.At.AddHours(3))@(e.Note is null ? "" : $" · {e.Note}")</span>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">Teslim alırken yanında olsun</h3>
+                <ul class="checks">
+                    <li>@Ui.Icon("check") En az @c.MinLicenseYears yıllık sürücü belgesi ve kimlik / pasaport</li>
+                    <li>@Ui.Icon("check") Sürücü adına kredi kartı (@Catalog.Money(r.Deposit) provizyon)</li>
+                    <li>@Ui.Icon("check") Rezervasyon kodun: <strong>@r.Code</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <aside class="summary">
+            <div class="summary-card">
+                <h3 class="panel-title">Ödeme özeti</h3>
+                <dl class="breakdown">
+                    <div><dt>Kiralama (@r.Days gün × @Catalog.Money(r.DailyPrice))</dt><dd>@Catalog.Money(r.BaseTotal)</dd></div>
+                    @if (r.Discount > 0)
+                    {
+                        <div><dt>Uzun kiralama indirimi</dt><dd class="good">−@Catalog.Money(r.Discount)</dd></div>
+                    }
+                    @foreach (var code in r.Extras)
+                    {
+                        if (Catalog.FindExtra(code) is { } e)
+                        {
+                            <div><dt>@e.Name</dt><dd>@Catalog.Money(e.PerDay ? e.Price * r.Days : e.Price)</dd></div>
+                        }
+                    }
+                    @if (r.OneWayFee > 0)
+                    {
+                        <div><dt>Farklı şubede iade</dt><dd>@Catalog.Money(r.OneWayFee)</dd></div>
+                    }
+                    <div class="total"><dt>Toplam <small>teslimde ödenir</small></dt><dd>@Catalog.Money(r.Total)</dd></div>
+                </dl>
+                <div class="driver">
+                    <span class="muted small">Sürücü</span>
+                    <strong>@r.FullName</strong>
+                    <span class="small">@r.Email · @r.Phone</span>
+                    @if (r.FlightNo is not null) { <span class="small">@Ui.Icon("plane") @r.FlightNo</span> }
+                </div>
+                <div class="action-list">
+                    @if (r.Status is ReservationStatus.Confirmed or ReservationStatus.Active)
+                    {
+                        <a href="/rezervasyonum/@r.Code/takvim.ics?t=@r.AccessToken" class="btn btn-outline btn-block">@Ui.Icon("calendar") Takvime ekle</a>
+                    }
+                    <button type="button" class="btn btn-outline btn-block" onclick="window.print()">@Ui.Icon("print") Yazdır</button>
+                    @if (canCancel)
+                    {
+                        <button type="button" class="btn btn-danger-ghost btn-block" data-open-dialog="cancel-dialog">@Ui.Icon("x") Rezervasyonu iptal et</button>
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+@if (canCancel)
+{
+    <dialog id="cancel-dialog" class="dialog">
+        <form asp-antiforgery="true" method="post" action="/rezervasyonum/@r.Code/iptal?t=@r.AccessToken">
+            <h3>Rezervasyonu iptal et</h3>
+            <p class="muted">@c.Name · @Catalog.DateTimeShort(r.PickupAt). İptal ücretsizdir ve geri alınamaz.</p>
+            <label>Neden iptal ediyorsun? <span class="opt">isteğe bağlı</span>
+                <select name="reason">
+                    <option value="">Seçmek istemiyorum</option>
+                    <option>Planlarım değişti</option>
+                    <option>Daha uygun bir fiyat buldum</option>
+                    <option>Farklı bir araç seçeceğim</option>
+                    <option>Uçuşum iptal oldu</option>
+                </select>
+            </label>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-outline" data-close-dialog>Vazgeç</button>
+                <button type="submit" class="btn btn-danger">İptal et</button>
+            </div>
+        </form>
+    </dialog>
+}

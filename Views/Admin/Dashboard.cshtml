@@ -1,0 +1,115 @@
+@model DashboardModel
+@{
+    ViewData["Title"] = "Pano";
+    var demo = User.IsInRole("demo");
+    var max = Math.Max(1, Model.Last30.Max(d => d.Revenue));
+    var total30 = Model.Last30.Sum(d => d.Revenue);
+    var count30 = Model.Last30.Sum(d => d.Count);
+    const int W = 720, H = 200;
+    var bw = (double)W / Model.Last30.Count;
+}
+@section Actions {
+    <span class="muted">@Catalog.Date(Clock.Now)</span>
+}
+
+<div class="kpis">
+    <div class="kpi">
+        <span>Bu ay ciro <small>(teslim tarihine göre)</small></span>
+        <strong>@Catalog.Money(Model.MonthRevenue)</strong>
+        <em>@Catalog.Money(Model.PrevMonthRevenue) geçen ay</em>
+    </div>
+    <div class="kpi"><span>Filo doluluğu (şu an)</span><strong>%@Model.Occupancy</strong><div class="meter"><i style="width:@Model.Occupancy%"></i></div></div>
+    <div class="kpi"><span>Kirada olan</span><strong>@Model.ActiveCount</strong><em>@Model.UpcomingCount yaklaşan rezervasyon</em></div>
+    <div class="kpi">
+        <span>Bekleyen işler</span>
+        <strong>@(Model.UnreadMessages + Model.FailedEmails)</strong>
+        <em><a href="/yonetim/mesajlar">@Model.UnreadMessages okunmamış mesaj</a> · <a href="/yonetim/epostalar?durum=Failed">@Model.FailedEmails hatalı e-posta</a></em>
+    </div>
+</div>
+
+<div class="grid-2">
+    <section class="card span-2">
+        <div class="card-head">
+            <h2>Son 30 gün</h2>
+            <span class="muted">@count30 rezervasyon · @Catalog.Money(total30)</span>
+        </div>
+        <div class="chart">
+            <svg viewBox="0 0 @W @(H + 24)" preserveAspectRatio="none" role="img" aria-label="Son 30 günün günlük rezervasyon cirosu">
+                @for (var g = 1; g <= 3; g++)
+                {
+                    <line x1="0" x2="@W" y1="@(H - H * g / 4)" y2="@(H - H * g / 4)" class="grid" />
+                }
+                @for (var i = 0; i < Model.Last30.Count; i++)
+                {
+                    var d = Model.Last30[i];
+                    var h = (double)(d.Revenue / max) * (H - 10);
+                    <g class="bar @(i == Model.Last30.Count - 1 ? "today" : "")">
+                        <rect x="@((i * bw + 3).ToString(System.Globalization.CultureInfo.InvariantCulture))" y="@((H - h).ToString(System.Globalization.CultureInfo.InvariantCulture))" width="@((bw - 6).ToString(System.Globalization.CultureInfo.InvariantCulture))" height="@(Math.Max(h, 2).ToString(System.Globalization.CultureInfo.InvariantCulture))" rx="4" />
+                        <title>@d.Day.ToString("d MMM ddd", Catalog.Tr): @d.Count rezervasyon, @Catalog.Money(d.Revenue)</title>
+                    </g>
+                    @if (i % 5 == 0 || i == Model.Last30.Count - 1)
+                    {
+                        @Html.Raw($"<text x=\"{(i * bw + bw / 2).ToString(System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{H + 18}\" text-anchor=\"middle\">{d.Day.ToString("d MMM", Catalog.Tr)}</text>")
+                    }
+                }
+            </svg>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-head"><h2>Bugün teslim edilecek</h2><span class="pill">@Model.PickupsToday.Count</span></div>
+        @if (Model.PickupsToday.Count == 0) { <p class="empty-row">Bugün teslim yok.</p> }
+        <ul class="today">
+            @foreach (var r in Model.PickupsToday)
+            {
+                <li>
+                    <span class="time">@r.PickupAt.ToString("HH:mm")</span>
+                    <a href="/yonetim/rezervasyonlar/@r.Id"><strong>@r.Car.Name</strong><small>@(demo && !r.IsDemo ? Mask.Name(r.FullName) : r.FullName) · @Ui.BranchName(r.PickupBranch)</small></a>
+                    <span class="status @Ui.StatusClass(r.Status)">@Catalog.StatusText(r.Status)</span>
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="card">
+        <div class="card-head"><h2>Bugün iade alınacak</h2><span class="pill">@Model.ReturnsToday.Count</span></div>
+        @if (Model.ReturnsToday.Count == 0) { <p class="empty-row">Bugün iade yok.</p> }
+        <ul class="today">
+            @foreach (var r in Model.ReturnsToday)
+            {
+                <li>
+                    <span class="time">@r.ReturnAt.ToString("HH:mm")</span>
+                    <a href="/yonetim/rezervasyonlar/@r.Id"><strong>@r.Car.Name</strong><small>@(demo && !r.IsDemo ? Mask.Name(r.FullName) : r.FullName) · @Ui.BranchName(r.ReturnBranch)</small></a>
+                    <span class="status @Ui.StatusClass(r.Status)">@Catalog.StatusText(r.Status)</span>
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="card span-2">
+        <div class="card-head"><h2>Son rezervasyonlar</h2><a href="/yonetim/rezervasyonlar" class="link">Tümü →</a></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Kod</th><th>Müşteri</th><th>Araç</th><th>Tarih</th><th class="num">Tutar</th><th>Durum</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Latest) { <partial name="_ResRow" model="r" /> }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card span-2">
+        <div class="card-head"><h2>En çok kazandıran araçlar</h2><span class="muted">son 2 ay</span></div>
+        @{ var topMax = Model.TopCars.Count == 0 ? 1 : Model.TopCars.Max(t => t.Revenue); }
+        <ul class="bars">
+            @foreach (var t in Model.TopCars)
+            {
+                <li>
+                    <span class="bars-label">@t.Name <small>@t.Count kiralama</small></span>
+                    <span class="bars-track"><i style="width:@((int)(t.Revenue / topMax * 100))%"></i></span>
+                    <span class="bars-value">@Catalog.Money(t.Revenue)</span>
+                </li>
+            }
+        </ul>
+    </section>
+</div>
